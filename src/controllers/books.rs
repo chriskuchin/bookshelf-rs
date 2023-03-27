@@ -5,10 +5,10 @@ use axum::{extract::Path, routing::get, Json, Router};
 pub mod files;
 
 pub fn get_routes() -> Router {
-    return Router::new()
+    Router::new()
         .route("/", get(get_books).post(create_book))
         .route("/:id", get(get_book).put(update_book).delete(delete_book))
-        .nest("/:id/files", file_routes());
+        .nest("/:id/files", file_routes())
 }
 
 async fn get_book(Path(book_id): Path<String>) -> Json<Message> {

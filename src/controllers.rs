@@ -10,18 +10,15 @@ pub mod mime;
 pub mod opds;
 
 pub fn get_routes() -> Router {
-    // build our application with a route
-
-    let api = Router::new()
-        .nest("/books", book_routes())
-        .nest("/mimes", mime_routes());
-
-    let app = Router::new()
+    Router::new()
         .nest_service("/", ServeDir::new("dist"))
         .route("/opds", get(get_opds))
-        .nest("/api/v1", api);
-
-    return app;
+        .nest(
+            "/api/v1",
+            Router::new()
+                .nest("/books", book_routes())
+                .nest("/mimes", mime_routes()),
+        )
 }
 
 #[derive(Debug, Serialize, Clone)]

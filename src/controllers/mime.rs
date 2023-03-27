@@ -2,9 +2,9 @@ use super::Message;
 use axum::{extract::Path, routing::get, Json, Router};
 
 pub fn get_routes() -> Router {
-    return Router::new()
+    Router::new()
         .route("/:ext", get(get_mime))
-        .route("/", get(list_mimes));
+        .route("/", get(list_mimes))
 }
 
 pub async fn get_mime(Path(ext): Path<String>) -> Json<Message> {
