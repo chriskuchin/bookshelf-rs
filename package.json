@@ -18,16 +18,13 @@
     "vue-router": "^4.1.5"
   },
   "devDependencies": {
-    "@peeky/server": "^0.14.0",
-    "@peeky/test": "^0.14.1",
     "@vue/compiler-sfc": "^3.2.40",
     "bulma": "^0.9.4",
     "css-loader": "^6.5.1",
     "html-webpack-plugin": "^5.5.0",
     "mini-css-extract-plugin": "^2.5.3",
-    "node-sass": "^7.0.3",
     "sass": "^1.49.0",
-    "sass-loader": "^12.4.0",
+    "sass-loader": "^13.2.1",
     "url-loader": "^4.1.1",
     "vue-loader": "^17.0.0",
     "webpack": "^5.67.0",
