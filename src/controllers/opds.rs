@@ -1,7 +1,8 @@
 use super::Message;
-use axum::Json;
+use axum::{extract::State, Json};
+use sqlx::SqlitePool;
 
-pub async fn get_opds() -> Json<Message> {
+pub async fn get_opds(State(_pool): State<SqlitePool>) -> Json<Message> {
     Json(Message {
         msg: format!("get_opds"),
     })

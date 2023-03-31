@@ -10,7 +10,6 @@ async fn main() {
         .max_connections(5)
         .connect("sqlite://bookshelf.db?mode=rwc")
         .await
-        .ok()
         .unwrap();
 
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
@@ -18,7 +17,7 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)
-        .serve(get_routes().into_make_service())
+        .serve(get_routes(pool).into_make_service())
         .await
         .unwrap();
 }

@@ -3,13 +3,14 @@ use crate::controllers::mime::get_routes as mime_routes;
 use crate::controllers::opds::get_opds;
 use axum::{routing::get, Router};
 use serde::Serialize;
+use sqlx::SqlitePool;
 use tower_http::services::ServeDir;
 
 pub mod books;
 pub mod mime;
 pub mod opds;
 
-pub fn get_routes() -> Router {
+pub fn get_routes(pool: SqlitePool) -> Router<()> {
     Router::new()
         .nest_service("/", ServeDir::new("dist"))
         .route("/opds", get(get_opds))
@@ -19,6 +20,7 @@ pub fn get_routes() -> Router {
                 .nest("/books", book_routes())
                 .nest("/mimes", mime_routes()),
         )
+        .with_state(pool)
 }
 
 #[derive(Debug, Serialize, Clone)]
