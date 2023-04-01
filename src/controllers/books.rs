@@ -24,7 +24,7 @@ async fn get_book(
     State(pool): State<SqlitePool>,
     Path(book_id): Path<String>,
 ) -> Result<Json<Book>, StatusCode> {
-    match get_book_by_id(pool, book_id).await {
+    match get_book_by_id(&pool, book_id).await {
         Some(book) => Ok(Json(book)),
         None => Err(StatusCode::NOT_FOUND),
     }
@@ -43,7 +43,7 @@ async fn delete_book(
     State(pool): State<SqlitePool>,
     Path(book_id): Path<String>,
 ) -> Result<StatusCode, ()> {
-    match delete_book_by_id(pool, book_id).await {
+    match delete_book_by_id(&pool, book_id).await {
         Err(_) => Err(()),
         _ => Ok(StatusCode::NO_CONTENT),
     }
@@ -55,7 +55,7 @@ async fn get_books(
 ) -> Json<Vec<Option<Book>>> {
     Json(
         list_books(
-            pool,
+            &pool,
             paging.0.limit.unwrap_or(10),
             paging.0.offset.unwrap_or(0),
         )

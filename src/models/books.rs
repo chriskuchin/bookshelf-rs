@@ -1,12 +1,12 @@
 use chrono::{serde::ts_milliseconds_option, DateTime, Utc};
 use futures::TryStreamExt;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{sqlite::SqliteRow, Row, SqlitePool};
 
-use crate::models::books::files::File;
+use crate::models::books::files::{get_files_by_book_id, File};
 pub mod files;
 
-#[derive(sqlx::FromRow, Debug, Serialize, Clone)]
+#[derive(sqlx::FromRow, Debug, Serialize, Deserialize, Clone)]
 pub struct Book {
     id: u64,
     #[serde(with = "ts_milliseconds_option")]
@@ -23,7 +23,7 @@ pub struct Book {
     cover_url: String,
     publisher: String,
     pub_date: String,
-    files: Option<Vec<File>>,
+    files: Vec<Option<File>>,
 }
 
 const GET_BOOK_BY_ID_QUERY: &str = "SELECT * FROM books WHERE id = ?";
@@ -57,15 +57,15 @@ fn row_to_book(row: SqliteRow) -> Book {
         cover_url,
         publisher,
         pub_date,
-        files: None,
+        files: Vec::new(),
     }
 }
 
-pub async fn get_book_by_id(pool: SqlitePool, id: String) -> Option<Book> {
+pub async fn get_book_by_id(pool: &SqlitePool, id: String) -> Option<Book> {
     let mut rows = sqlx::query(GET_BOOK_BY_ID_QUERY)
         .bind(id)
         .map(row_to_book)
-        .fetch(&pool);
+        .fetch(pool);
 
     while let Some(row) = rows.try_next().await.unwrap() {
         return Some(row);
@@ -74,26 +74,40 @@ pub async fn get_book_by_id(pool: SqlitePool, id: String) -> Option<Book> {
     return None;
 }
 
-pub async fn list_books(pool: SqlitePool, limit: u32, offset: u32) -> Vec<Option<Book>> {
+pub async fn list_books(pool: &SqlitePool, limit: u32, offset: u32) -> Vec<Option<Book>> {
     let mut rows = sqlx::query(LIST_BOOKS_QUERY)
         .bind(limit)
         .bind(offset)
         .map(row_to_book)
-        .fetch(&pool);
+        .fetch(pool);
 
-    const INIT: Option<Book> = None;
-    let mut results = Vec::new();
+    let mut results: Vec<Option<Book>> = Vec::new();
     while let Some(row) = rows.try_next().await.unwrap() {
-        results.push(Some(row))
+        let files = get_files_by_book_id(pool, row.id.to_string()).await;
+        results.push(Some(Book {
+            id: row.id,
+            created_at: None,
+            updated_at: None,
+            deleted_at: None,
+            uuid: row.uuid,
+            isbn: row.isbn,
+            title: row.title,
+            author: row.author,
+            description: row.description,
+            cover_url: row.cover_url,
+            publisher: row.publisher,
+            pub_date: row.pub_date,
+            files: files,
+        }))
     }
 
     results
 }
 
-pub async fn delete_book_by_id(pool: SqlitePool, book_id: String) -> Result<(), sqlx::Error> {
+pub async fn delete_book_by_id(pool: &SqlitePool, book_id: String) -> Result<(), sqlx::Error> {
     let result = sqlx::query(DELETE_BOOK_BY_ID_QUERY)
         .bind(book_id)
-        .execute(&pool)
+        .execute(pool)
         .await;
 
     match result {
