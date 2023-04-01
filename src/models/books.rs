@@ -9,11 +9,20 @@ pub mod files;
 #[derive(sqlx::FromRow, Debug, Serialize, Deserialize, Clone)]
 pub struct Book {
     id: u64,
-    #[serde(with = "ts_milliseconds_option")]
+    #[serde(
+        with = "ts_milliseconds_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     created_at: Option<DateTime<Utc>>,
-    #[serde(with = "ts_milliseconds_option")]
+    #[serde(
+        with = "ts_milliseconds_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     updated_at: Option<DateTime<Utc>>,
-    #[serde(with = "ts_milliseconds_option")]
+    #[serde(
+        with = "ts_milliseconds_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     deleted_at: Option<DateTime<Utc>>,
     uuid: String,
     isbn: String,
