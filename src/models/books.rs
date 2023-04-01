@@ -23,12 +23,8 @@ pub struct Book {
     cover_url: String,
     publisher: String,
     pub_date: String,
-    files: Vec<Option<File>>,
+    files: Option<Vec<File>>,
 }
-
-const GET_BOOK_BY_ID_QUERY: &str = "SELECT * FROM books WHERE id = ?";
-const LIST_BOOKS_QUERY: &str = "SELECT * FROM books LIMIT ? OFFSET ?";
-const DELETE_BOOK_BY_ID_QUERY: &str = "DELETE FROM books WHERE id = ?";
 
 fn row_to_book(row: SqliteRow) -> Book {
     let id: u32 = row.try_get(0).unwrap();
@@ -57,9 +53,11 @@ fn row_to_book(row: SqliteRow) -> Book {
         cover_url,
         publisher,
         pub_date,
-        files: Vec::new(),
+        files: None,
     }
 }
+
+const GET_BOOK_BY_ID_QUERY: &str = "SELECT * FROM books WHERE id = ?";
 
 pub async fn get_book_by_id(pool: &SqlitePool, id: String) -> Option<Book> {
     let mut rows = sqlx::query(GET_BOOK_BY_ID_QUERY)
@@ -74,17 +72,19 @@ pub async fn get_book_by_id(pool: &SqlitePool, id: String) -> Option<Book> {
     return None;
 }
 
-pub async fn list_books(pool: &SqlitePool, limit: u32, offset: u32) -> Vec<Option<Book>> {
+const LIST_BOOKS_QUERY: &str = "SELECT * FROM books LIMIT ? OFFSET ?";
+
+pub async fn list_books(pool: &SqlitePool, limit: u32, offset: u32) -> Vec<Book> {
     let mut rows = sqlx::query(LIST_BOOKS_QUERY)
         .bind(limit)
         .bind(offset)
         .map(row_to_book)
         .fetch(pool);
 
-    let mut results: Vec<Option<Book>> = Vec::new();
+    let mut results: Vec<Book> = Vec::new();
     while let Some(row) = rows.try_next().await.unwrap() {
         let files = get_files_by_book_id(pool, row.id.to_string()).await;
-        results.push(Some(Book {
+        results.push(Book {
             id: row.id,
             created_at: None,
             updated_at: None,
@@ -97,12 +97,14 @@ pub async fn list_books(pool: &SqlitePool, limit: u32, offset: u32) -> Vec<Optio
             cover_url: row.cover_url,
             publisher: row.publisher,
             pub_date: row.pub_date,
-            files: files,
-        }))
+            files: Some(files),
+        })
     }
 
     results
 }
+
+const DELETE_BOOK_BY_ID_QUERY: &str = "DELETE FROM books WHERE id = ?";
 
 pub async fn delete_book_by_id(pool: &SqlitePool, book_id: String) -> Result<(), sqlx::Error> {
     let result = sqlx::query(DELETE_BOOK_BY_ID_QUERY)

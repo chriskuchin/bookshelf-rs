@@ -13,7 +13,7 @@ async fn main() {
 
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 31526));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(get_routes(pool).into_make_service())

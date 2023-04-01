@@ -52,7 +52,7 @@ async fn delete_book(
 async fn get_books(
     State(pool): State<SqlitePool>,
     paging: Query<PagingOptions>,
-) -> Json<Vec<Option<Book>>> {
+) -> Json<Vec<Book>> {
     Json(
         list_books(
             &pool,
