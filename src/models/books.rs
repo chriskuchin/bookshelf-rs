@@ -26,9 +26,9 @@ pub struct Book {
     files: Option<Vec<File>>,
 }
 
-const GET_BOOK_BY_ID_QUERY: &str = "SELECT * FROM books where id = ?";
+const GET_BOOK_BY_ID_QUERY: &str = "SELECT * FROM books WHERE id = ?";
 const LIST_BOOKS_QUERY: &str = "SELECT * FROM books LIMIT ? OFFSET ?";
-const DELETE_BOOK_BY_ID_QUERY: &str = "DELETE FROM books where id = ?";
+const DELETE_BOOK_BY_ID_QUERY: &str = "DELETE FROM books WHERE id = ?";
 
 fn row_to_book(row: SqliteRow) -> Book {
     let id: u32 = row.try_get(0).unwrap();
