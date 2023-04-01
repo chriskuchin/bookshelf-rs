@@ -24,8 +24,7 @@ async fn get_book(
     State(pool): State<SqlitePool>,
     Path(book_id): Path<String>,
 ) -> Result<Json<Book>, StatusCode> {
-    let book = get_book_by_id(pool, book_id).await;
-    match book {
+    match get_book_by_id(pool, book_id).await {
         Some(book) => Ok(Json(book)),
         None => Err(StatusCode::NOT_FOUND),
     }
@@ -44,9 +43,7 @@ async fn delete_book(
     State(pool): State<SqlitePool>,
     Path(book_id): Path<String>,
 ) -> Result<StatusCode, ()> {
-    let result = delete_book_by_id(pool, book_id).await;
-
-    match result {
+    match delete_book_by_id(pool, book_id).await {
         Err(_) => Err(()),
         _ => Ok(StatusCode::NO_CONTENT),
     }
