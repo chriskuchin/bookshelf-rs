@@ -1,14 +1,13 @@
 use crate::controllers::get_routes;
-use sqlx::sqlite::SqlitePoolOptions;
+use sqlx::sqlite::SqlitePool;
 use std::net::SocketAddr;
 
 pub mod controllers;
+pub mod models;
 
 #[tokio::main]
 async fn main() {
-    let pool = SqlitePoolOptions::new()
-        .max_connections(5)
-        .connect("sqlite://bookshelf.db?mode=rwc")
+    let pool = SqlitePool::connect("sqlite://bookshelf.db?mode=rwc")
         .await
         .unwrap();
 

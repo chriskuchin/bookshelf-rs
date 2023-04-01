@@ -2,7 +2,7 @@ use crate::controllers::books::get_routes as book_routes;
 use crate::controllers::mime::get_routes as mime_routes;
 use crate::controllers::opds::get_opds;
 use axum::{routing::get, Router};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use tower_http::services::ServeDir;
 
@@ -26,4 +26,10 @@ pub fn get_routes(pool: SqlitePool) -> Router<()> {
 #[derive(Debug, Serialize, Clone)]
 pub struct Message {
     msg: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct PagingOptions {
+    limit: Option<u32>,
+    offset: Option<u32>,
 }
