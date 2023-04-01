@@ -2,6 +2,8 @@ use chrono::{serde::ts_milliseconds_option, DateTime, Utc};
 use futures::TryStreamExt;
 use serde::Serialize;
 use sqlx::{sqlite::SqliteRow, Row, SqlitePool};
+
+use crate::models::books::files::File;
 pub mod files;
 
 #[derive(sqlx::FromRow, Debug, Serialize, Clone)]
@@ -21,7 +23,7 @@ pub struct Book {
     cover_url: String,
     publisher: String,
     pub_date: String,
-    // files: [File; 0],
+    files: Option<Vec<File>>,
 }
 
 const GET_BOOK_BY_ID_QUERY: &str = "SELECT * FROM books where id = ?";
@@ -55,6 +57,7 @@ fn row_to_book(row: SqliteRow) -> Book {
         cover_url,
         publisher,
         pub_date,
+        files: None,
     }
 }
 

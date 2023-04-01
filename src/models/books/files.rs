@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
-// use serde::{ser, Serialize, Serializer};
+use serde::Serialize;
 
-// #[derive(sqlx::FromRow, Debug, Serialize, Clone)]
+#[derive(sqlx::FromRow, Debug, Serialize, Clone)]
 pub struct File {
     _id: u64,
     _created_at: DateTime<Utc>,
