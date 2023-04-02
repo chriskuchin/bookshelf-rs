@@ -1,10 +1,12 @@
 use super::{Message, PagingOptions};
 use crate::{
     controllers::books::files::get_routes as file_routes,
-    models::books::{delete_book_by_id, get_book_by_id, list_books, Book},
+    models::books::{
+        delete_book_by_id, get_book_by_id, insert_book, list_books, update_book_by_id, Book,
+    },
 };
 use axum::{
-    extract::{Path, Query, State},
+    extract::{self, Path, Query, State},
     http::StatusCode,
     routing::get,
     Json, Router,
@@ -31,21 +33,34 @@ async fn get_book(
 }
 
 async fn update_book(
-    State(_pool): State<SqlitePool>,
+    State(pool): State<SqlitePool>,
     Path(book_id): Path<String>,
-) -> Json<Message> {
-    Json(Message {
-        msg: format!("update_book -> {}", book_id),
-    })
+    extract::Json(payload): extract::Json<Book>,
+) -> Result<(), StatusCode> {
+    match update_book_by_id(&pool, book_id, payload).await {
+        Ok(val) => {
+            if val == 0 {
+                return Err(StatusCode::NOT_FOUND);
+            }
+
+            Ok(())
+        }
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
 }
 
 async fn delete_book(
     State(pool): State<SqlitePool>,
     Path(book_id): Path<String>,
-) -> Result<StatusCode, ()> {
+) -> Result<(), StatusCode> {
     match delete_book_by_id(&pool, book_id).await {
-        Err(_) => Err(()),
-        _ => Ok(StatusCode::NO_CONTENT),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Ok(val) => {
+            if val == 0 {
+                return Err(StatusCode::NOT_FOUND);
+            }
+            Ok(())
+        }
     }
 }
 
@@ -63,8 +78,13 @@ async fn get_books(
     )
 }
 
-async fn create_book(State(_pool): State<SqlitePool>) -> Json<Message> {
-    Json(Message {
-        msg: format!("create_book"),
-    })
+async fn create_book(
+    State(pool): State<SqlitePool>,
+    extract::Json(payload): extract::Json<Book>,
+) -> Result<Json<u64>, StatusCode> {
+    let result = insert_book(&pool, payload).await;
+    match result {
+        Ok(val) => Ok(Json(val)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
 }
