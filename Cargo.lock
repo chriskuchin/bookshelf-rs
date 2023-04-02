@@ -125,6 +125,7 @@ dependencies = [
  "axum",
  "chrono",
  "futures",
+ "http",
  "serde",
  "sqlx",
  "tokio",
