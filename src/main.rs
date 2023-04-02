@@ -12,6 +12,13 @@ async fn main() {
         .parse::<u16>()
         .unwrap_or(3000);
 
+    // BOOKSHELF_DB_URL
+    // BOOKSHELF_STORAGE_URL
+    // BOOKSHELF_AWS_ACCESS_KEY_ID
+    // BOOKSHELF_AWS_SECRET_ACCESS_KEY
+    // BOOKSHELF_AWS_S3_REGION=auto
+    // BOOKSHELF_AWS_S3_ENDPOINT_URL
+
     let pool = SqlitePool::connect("sqlite://bookshelf.db?mode=rwc")
         .await
         .unwrap();
