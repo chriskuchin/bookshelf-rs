@@ -5,16 +5,16 @@ use sqlx::{sqlite::SqliteRow, Row, SqlitePool};
 
 #[derive(sqlx::FromRow, Debug, Serialize, Deserialize, Clone)]
 pub struct File {
-    id: u32,
+    pub id: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
-    created_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    updated_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    deleted_at: Option<DateTime<Utc>>,
-    book_id: u32,
-    mime_type: String,
-    path: String,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub book_id: u32,
+    pub mime_type: String,
+    pub path: String,
 }
 
 fn row_to_file(row: SqliteRow) -> File {
