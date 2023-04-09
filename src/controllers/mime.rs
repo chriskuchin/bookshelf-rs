@@ -1,3 +1,5 @@
+use super::AppConfig;
+use aws_sdk_s3::Client;
 use std::collections::HashMap;
 
 use crate::models::mime::{ext_to_mime, list_mimes as mimes};
@@ -9,14 +11,14 @@ use axum::{
 };
 use sqlx::SqlitePool;
 
-pub fn get_routes() -> Router<SqlitePool> {
+pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
     Router::new()
         .route("/:ext", get(get_mime))
         .route("/", get(list_mimes))
 }
 
 pub async fn get_mime(
-    State(_pool): State<SqlitePool>,
+    State((_pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path(ext): Path<String>,
 ) -> Result<Json<String>, StatusCode> {
     match ext_to_mime(ext) {
@@ -25,6 +27,8 @@ pub async fn get_mime(
     }
 }
 
-pub async fn list_mimes(State(_pool): State<SqlitePool>) -> Json<HashMap<String, String>> {
+pub async fn list_mimes(
+    State((_pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
+) -> Json<HashMap<String, String>> {
     Json(mimes())
 }

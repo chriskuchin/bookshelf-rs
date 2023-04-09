@@ -1,10 +1,11 @@
-use super::{Message, PagingOptions};
+use super::{AppConfig, Message, PagingOptions};
 use crate::{
     controllers::books::files::get_routes as file_routes,
     models::books::{
         delete_book_by_id, get_book_by_id, insert_book, list_books, update_book_by_id, Book,
     },
 };
+use aws_sdk_s3::Client;
 use axum::{
     extract::{self, Path, Query, State},
     http::StatusCode,
@@ -15,7 +16,7 @@ use sqlx::SqlitePool;
 
 pub mod files;
 
-pub fn get_routes() -> Router<SqlitePool> {
+pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
     Router::new()
         .route("/", get(get_books).post(create_book))
         .route("/:id", get(get_book).put(update_book).delete(delete_book))
@@ -23,7 +24,7 @@ pub fn get_routes() -> Router<SqlitePool> {
 }
 
 async fn get_book(
-    State(pool): State<SqlitePool>,
+    State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path(book_id): Path<String>,
 ) -> Result<Json<Book>, StatusCode> {
     match get_book_by_id(&pool, book_id).await {
@@ -33,7 +34,7 @@ async fn get_book(
 }
 
 async fn update_book(
-    State(pool): State<SqlitePool>,
+    State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path(book_id): Path<String>,
     extract::Json(payload): extract::Json<Book>,
 ) -> Result<(), StatusCode> {
@@ -50,7 +51,7 @@ async fn update_book(
 }
 
 async fn delete_book(
-    State(pool): State<SqlitePool>,
+    State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path(book_id): Path<String>,
 ) -> Result<(), StatusCode> {
     match delete_book_by_id(&pool, book_id).await {
@@ -65,7 +66,7 @@ async fn delete_book(
 }
 
 async fn get_books(
-    State(pool): State<SqlitePool>,
+    State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     paging: Query<PagingOptions>,
 ) -> Json<Vec<Book>> {
     Json(
@@ -79,7 +80,7 @@ async fn get_books(
 }
 
 async fn create_book(
-    State(pool): State<SqlitePool>,
+    State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     extract::Json(payload): extract::Json<Book>,
 ) -> Result<Json<u64>, StatusCode> {
     let result = insert_book(&pool, payload).await;

@@ -1,29 +1,65 @@
-use super::Message;
+use super::{AppConfig, Message};
 use crate::models::{books::files::File, mime::ext_to_mime};
+use aws_sdk_s3::Client;
 use axum::{
+    body::Full,
     extract::{Multipart, Path, State},
+    response::IntoResponse,
     routing::get,
     Json, Router,
 };
-use http::StatusCode;
+use http::{header, StatusCode};
 use sqlx::SqlitePool;
 use std::{fs::File as FSFile, io::Write};
 
-pub fn get_routes() -> Router<SqlitePool> {
+pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
     Router::new().route("/:ext", get(get_file).delete(delete_file).post(upload_file))
 }
 
 pub async fn get_file(
-    State(_pool): State<SqlitePool>,
-    Path((book_id, ext)): Path<(String, String)>,
-) -> Json<Message> {
-    Json(Message {
-        msg: format!("get_file -> {}, {}", book_id, ext),
-    })
+    State((_pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
+    Path((_book_id, _ext)): Path<(String, String)>,
+) -> impl IntoResponse {
+    let res = storage
+        .list_objects()
+        .bucket(settings.storage_url.clone())
+        .send()
+        .await
+        .unwrap();
+
+    for obj in res.contents().unwrap() {
+        let file = storage
+            .get_object()
+            .bucket(settings.storage_url.clone())
+            .key(obj.key().unwrap().clone())
+            .send()
+            .await
+            .unwrap();
+
+        let headers = [
+            (header::CONTENT_TYPE, "application/x-mobipocket-ebook"),
+            (
+                header::CONTENT_DISPOSITION,
+                "attachment; filename=\"book.mobi\"",
+            ),
+        ];
+
+        return (
+            headers,
+            Full::from(file.body.collect().await.unwrap().to_vec()),
+        );
+    }
+    return (
+        [
+            (header::CONTENT_TYPE, "text/plain"),
+            (header::LAST_MODIFIED, ""),
+        ],
+        Full::from("value"),
+    );
 }
 
 pub async fn delete_file(
-    State(_pool): State<SqlitePool>,
+    State((_pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path((book_id, ext)): Path<(String, String)>,
 ) -> Json<Message> {
     Json(Message {
@@ -32,7 +68,7 @@ pub async fn delete_file(
 }
 
 pub async fn upload_file(
-    State(_pool): State<SqlitePool>,
+    State((_pool, _storage, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path((book_id, ext)): Path<(String, String)>,
     mut multipart: Multipart,
 ) -> Result<Json<File>, StatusCode> {

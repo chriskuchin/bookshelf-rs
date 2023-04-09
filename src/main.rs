@@ -1,4 +1,6 @@
 use crate::controllers::get_routes;
+use aws_sdk_s3::config::{Credentials, Region};
+use aws_sdk_s3::{Client, Config as StorageConfig};
 use config::Config;
 use serde::Deserialize;
 use sqlx::sqlite::SqlitePool;
@@ -9,7 +11,7 @@ pub mod models;
 
 #[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
-struct AppConfig {
+pub struct AppConfig {
     db_url: String,
     storage_url: String,
     port: u16,
@@ -38,6 +40,22 @@ async fn main() {
         .try_deserialize::<AppConfig>()
         .unwrap();
 
+    let storage_creds = Credentials::new(
+        &settings.aws_access_key_id,
+        &settings.aws_secret_access_key,
+        None,
+        None,
+        "bookshelf",
+    );
+
+    let storage_config = StorageConfig::builder()
+        .region(Region::new(settings.aws_s3_region.clone()))
+        .endpoint_url(&settings.aws_s3_endpoint_url)
+        .credentials_provider(storage_creds)
+        .build();
+
+    let storage_client = Client::from_conf(storage_config);
+
     let pool = SqlitePool::connect(&settings.db_url).await.unwrap();
 
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
@@ -45,7 +63,7 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], settings.port));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)
-        .serve(get_routes(pool).into_make_service())
+        .serve(get_routes(pool, storage_client, settings).into_make_service())
         .await
         .unwrap();
 }
