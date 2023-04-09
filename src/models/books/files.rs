@@ -51,3 +51,21 @@ pub async fn get_files_by_book_id(pool: &SqlitePool, book_id: String) -> Vec<Fil
 
     results
 }
+const GET_FILE_PATH_BY_MIME_QUERY: &str =
+    "SELECT path FROM files where book_id = ? and mime_type = ?";
+pub async fn get_file_path_by_mime(
+    pool: &SqlitePool,
+    book_id: &String,
+    mime: &String,
+) -> Option<String> {
+    let result = sqlx::query(GET_FILE_PATH_BY_MIME_QUERY)
+        .bind(book_id)
+        .bind(mime)
+        .fetch_one(pool)
+        .await;
+
+    match result {
+        Ok(row) => Some(row.try_get(0).unwrap()),
+        Err(_) => None,
+    }
+}

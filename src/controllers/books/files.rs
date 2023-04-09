@@ -1,5 +1,5 @@
 use super::{AppConfig, Message};
-use crate::models::{books::files::File, mime::ext_to_mime};
+use crate::models::{books::files::{File, get_file_path_by_mime}, mime::ext_to_mime};
 use aws_sdk_s3::Client;
 use axum::{
     body::Full,
@@ -17,9 +17,18 @@ pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
 }
 
 pub async fn get_file(
-    State((_pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
-    Path((_book_id, _ext)): Path<(String, String)>,
+    State((pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
+    Path((book_id, ext)): Path<(String, String)>,
 ) -> impl IntoResponse {
+    match ext_to_mime(ext) {
+        Some(mime) => {
+            match get_file_path_by_mime(&pool, &book_id, &mime).await {
+                Some(path) => println!("{}", path),
+                None => println!("Not Found")
+            }
+        }
+        None => println!("Not found ext")
+    }
     let res = storage
         .list_objects()
         .bucket(settings.storage_url.clone())

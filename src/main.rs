@@ -24,16 +24,14 @@ pub struct AppConfig {
 #[tokio::main]
 async fn main() {
     let port: u16 = option_env!("NOMAD_PORT_run")
-        .unwrap_or("")
+        .unwrap_or("3000")
         .parse::<u16>()
-        .unwrap_or(3000);
+        .unwrap();
 
     let settings = Config::builder()
         .set_default("port", port)
         .unwrap()
         .add_source(config::File::with_name("config"))
-        // Add in settings from the environment (with a prefix of APP)
-        // Eg.. `APP_DEBUG=1 ./target/app` would set the `debug` key
         .add_source(config::Environment::with_prefix("BOOKSHELF"))
         .build()
         .unwrap()
