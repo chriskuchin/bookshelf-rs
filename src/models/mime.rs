@@ -9,7 +9,7 @@ pub const MIME_TYPES: [(&'static str, &'static str); 6] = [
     ("txt", "text/plain"),
 ];
 
-pub fn ext_to_mime(ext: String) -> Option<String> {
+pub fn ext_to_mime(ext: &String) -> Option<String> {
     for (extension, mime) in MIME_TYPES {
         if ext.ends_with(extension) {
             return Some(mime.to_string());

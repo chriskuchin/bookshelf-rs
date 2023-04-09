@@ -1,10 +1,13 @@
 use super::{AppConfig, Message};
-use crate::models::{books::files::{File, get_file_path_by_mime}, mime::ext_to_mime};
+use crate::models::{
+    books::files::{get_file_path_by_mime, File},
+    mime::ext_to_mime,
+};
 use aws_sdk_s3::Client;
 use axum::{
     body::Full,
     extract::{Multipart, Path, State},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::get,
     Json, Router,
 };
@@ -19,52 +22,38 @@ pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
 pub async fn get_file(
     State((pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
     Path((book_id, ext)): Path<(String, String)>,
-) -> impl IntoResponse {
-    match ext_to_mime(ext) {
-        Some(mime) => {
-            match get_file_path_by_mime(&pool, &book_id, &mime).await {
-                Some(path) => println!("{}", path),
-                None => println!("Not Found")
+) -> Response {
+    match ext_to_mime(&ext) {
+        Some(mime) => match get_file_path_by_mime(&pool, &book_id, &mime).await {
+            Some(path) => {
+                let file = storage
+                    .get_object()
+                    .bucket(settings.storage_url.clone())
+                    .key(path.clone())
+                    .send()
+                    .await
+                    .unwrap();
+
+                println!("{} - {}", path, file.content_length());
+
+                let attachment_header = format!("attachment; filename\"book.{}\"", ext);
+                let headers = [
+                    (header::CONTENT_TYPE, mime.as_str()),
+                    (header::CONTENT_DISPOSITION, attachment_header.as_str()),
+                ];
+
+                return (
+                    headers,
+                    Full::from(file.body.collect().await.unwrap().to_vec()),
+                )
+                    .into_response();
             }
-        }
-        None => println!("Not found ext")
+            None => println!("Not Found"),
+        },
+        None => println!("Not found ext"),
     }
-    let res = storage
-        .list_objects()
-        .bucket(settings.storage_url.clone())
-        .send()
-        .await
-        .unwrap();
 
-    for obj in res.contents().unwrap() {
-        let file = storage
-            .get_object()
-            .bucket(settings.storage_url.clone())
-            .key(obj.key().unwrap().clone())
-            .send()
-            .await
-            .unwrap();
-
-        let headers = [
-            (header::CONTENT_TYPE, "application/x-mobipocket-ebook"),
-            (
-                header::CONTENT_DISPOSITION,
-                "attachment; filename=\"book.mobi\"",
-            ),
-        ];
-
-        return (
-            headers,
-            Full::from(file.body.collect().await.unwrap().to_vec()),
-        );
-    }
-    return (
-        [
-            (header::CONTENT_TYPE, "text/plain"),
-            (header::LAST_MODIFIED, ""),
-        ],
-        Full::from("value"),
-    );
+    return (StatusCode::NOT_FOUND).into_response();
 }
 
 pub async fn delete_file(
@@ -109,7 +98,7 @@ pub async fn upload_file(
             updated_at: None,
             deleted_at: None,
             book_id: book_id.parse::<u32>().unwrap(),
-            mime_type: ext_to_mime(ext).unwrap(),
+            mime_type: ext_to_mime(&ext).unwrap(),
             path: format!("{}/{}/{}", file_name, name, "other"),
         }));
     }

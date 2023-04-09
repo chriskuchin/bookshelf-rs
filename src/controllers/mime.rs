@@ -21,7 +21,7 @@ pub async fn get_mime(
     State((_pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path(ext): Path<String>,
 ) -> Result<Json<String>, StatusCode> {
-    match ext_to_mime(ext) {
+    match ext_to_mime(&ext) {
         Some(mime) => Ok(Json(mime)),
         None => Err(StatusCode::NOT_FOUND),
     }
