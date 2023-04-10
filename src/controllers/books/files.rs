@@ -1,6 +1,7 @@
 use super::{AppConfig, Message};
 use crate::models::{
     books::files::{get_file_path_by_mime, File},
+    books::get_book_title_by_book_id,
     mime::ext_to_mime,
 };
 use aws_sdk_s3::Client;
@@ -34,9 +35,11 @@ pub async fn get_file(
                     .await
                     .unwrap();
 
-                println!("{} - {}", path, file.content_length());
+                let title = get_book_title_by_book_id(pool, book_id)
+                    .await
+                    .unwrap_or(String::from("unknown"));
 
-                let attachment_header = format!("attachment; filename\"book.{}\"", ext);
+                let attachment_header = format!("attachment; filename = \"{}.{}\"", title, ext);
                 let headers = [
                     (header::CONTENT_TYPE, mime.as_str()),
                     (header::CONTENT_DISPOSITION, attachment_header.as_str()),
@@ -48,12 +51,12 @@ pub async fn get_file(
                 )
                     .into_response();
             }
-            None => println!("Not Found"),
+            None => {}
         },
-        None => println!("Not found ext"),
+        None => {}
     }
 
-    return (StatusCode::NOT_FOUND).into_response();
+    (StatusCode::NOT_FOUND).into_response()
 }
 
 pub async fn delete_file(

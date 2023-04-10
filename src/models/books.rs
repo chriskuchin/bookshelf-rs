@@ -189,3 +189,15 @@ pub async fn insert_book(pool: &SqlitePool, book: Book) -> Result<u64, sqlx::Err
         Err(err) => Err(err),
     }
 }
+
+const GET_BOOK_TITLE_BY_BOOK_ID: &str = "SELECT title FROM books where id = ?";
+pub async fn get_book_title_by_book_id(pool: SqlitePool, book_id: String) -> Option<String> {
+    match sqlx::query(GET_BOOK_TITLE_BY_BOOK_ID)
+        .bind(book_id)
+        .fetch_one(&pool)
+        .await
+    {
+        Ok(row) => Some(row.try_get(0).unwrap()),
+        Err(_) => None,
+    }
+}
