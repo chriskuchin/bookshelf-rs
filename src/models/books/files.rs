@@ -13,6 +13,7 @@ pub struct File {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deleted_at: Option<DateTime<Utc>>,
     pub book_id: u32,
+    #[serde(rename = "type")]
     pub mime_type: String,
     pub path: String,
 }
@@ -52,15 +53,17 @@ pub async fn get_files_by_book_id(pool: &SqlitePool, book_id: String) -> Vec<Fil
     results
 }
 const GET_FILE_PATH_BY_MIME_QUERY: &str =
-    "SELECT path FROM files where book_id = ? and mime_type = ?";
+    "SELECT path FROM files where book_id = ? and mime_type in (?, ?)";
 pub async fn get_file_path_by_mime(
     pool: &SqlitePool,
     book_id: &String,
     mime: &String,
+    ext: &String,
 ) -> Option<String> {
     let result = sqlx::query(GET_FILE_PATH_BY_MIME_QUERY)
         .bind(book_id)
         .bind(mime)
+        .bind(ext)
         .fetch_one(pool)
         .await;
 
