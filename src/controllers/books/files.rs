@@ -1,8 +1,8 @@
 use super::{AppConfig, Message};
 use crate::models::{
-    books::files::{get_file_path_by_mime, File},
-    books::get_book_title_by_book_id,
-    mime::ext_to_mime,
+    books::files::get_file_path_by_mime,
+    books::{get_book_by_id, get_book_title_by_book_id},
+    mime::{ext_to_mime, mime_to_ext},
 };
 use aws_sdk_s3::Client;
 use axum::{
@@ -14,7 +14,7 @@ use axum::{
 };
 use http::{header, StatusCode};
 use sqlx::SqlitePool;
-use std::{fs::File as FSFile, io::Write};
+use uuid::Uuid;
 
 pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
     Router::new().route("/:ext", get(get_file).delete(delete_file).post(upload_file))
@@ -69,42 +69,41 @@ pub async fn delete_file(
 }
 
 pub async fn upload_file(
-    State((_pool, _storage, _settings)): State<(SqlitePool, Client, AppConfig)>,
+    State((pool, _storage, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path((book_id, ext)): Path<(String, String)>,
     mut multipart: Multipart,
-) -> Result<Json<File>, StatusCode> {
-    while let Some(field) = multipart.next_field().await.unwrap() {
-        let file_name = field.file_name().unwrap().to_string();
-        let name = field.name().unwrap().to_string();
-        let data = field.bytes().await.unwrap();
-
-        // println!("Length of `{}` is {} bytes", name, data.len());
-
-        // println!(
-        //     "{} - {}",
-        //     file_name,
-        //     ext_to_mime("kindle.epub".to_string()).unwrap()
-        // );
-
+) -> Response {
+    match get_book_by_id(&pool, &book_id).await {
         // verify book exists
-        // ensure non duplicates... outside of mime type
-        // generate s3 file name... sha hash of file?
-        // upload to s3
-        // record file in DB
+        Some(book) => {
+            // generate s3 file name... sha hash of file?
+            let key = format!("{}/{}/{}", &book.uuid, &ext, Uuid::new_v4());
 
-        let mut f = FSFile::create("test.mobi").unwrap();
-        f.write_all(data.to_vec().as_slice()).unwrap();
+            if book.files.is_some() {
+                println!("found: {}", &key);
+                for file in book.files.unwrap() {
+                    if mime_to_ext(&file.mime_type) == ext {
+                        return (StatusCode::CONFLICT).into_response();
+                    }
+                }
+            }
 
-        return Ok(Json(File {
-            id: 100,
-            created_at: None,
-            updated_at: None,
-            deleted_at: None,
-            book_id: book_id.parse::<u32>().unwrap(),
-            mime_type: ext_to_mime(&ext).unwrap(),
-            path: format!("{}/{}/{}", file_name, name, "other"),
-        }));
+            if ext_to_mime(&ext).is_none() {
+                return (StatusCode::BAD_REQUEST).into_response();
+            }
+
+            while let Some(field) = multipart.next_field().await.unwrap() {
+                let file_name = field.file_name().unwrap_or("unknown_file").to_string();
+                let name = field.name().unwrap_or("unknown_name").to_string();
+                let data = field.bytes().await.unwrap();
+
+                println!("{} {} {}", file_name, name, data.len());
+            }
+        }
+        None => return (StatusCode::NOT_FOUND).into_response(),
     }
 
-    return Err(StatusCode::NOT_ACCEPTABLE);
+    //     let mut f = FSFile::create("test.mobi").unwrap();
+    //     f.write_all(data.to_vec().as_slice()).unwrap();
+    return (StatusCode::NOT_ACCEPTABLE).into_response();
 }

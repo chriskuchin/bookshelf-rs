@@ -30,16 +30,16 @@ pub struct Book {
     )]
     deleted_at: Option<DateTime<Utc>>,
     #[serde(skip_deserializing)]
-    uuid: String,
+    pub uuid: String,
     isbn: String,
-    title: String,
+    pub title: String,
     author: String,
     description: String,
     cover_url: String,
     publisher: String,
     pub_date: String,
     #[serde(skip_deserializing)]
-    files: Option<Vec<File>>,
+    pub files: Option<Vec<File>>,
 }
 
 fn row_to_book(row: SqliteRow) -> Book {
@@ -74,7 +74,7 @@ fn row_to_book(row: SqliteRow) -> Book {
 }
 
 const GET_BOOK_BY_ID_QUERY: &str = "SELECT * FROM books WHERE id = ?";
-pub async fn get_book_by_id(pool: &SqlitePool, id: String) -> Option<Book> {
+pub async fn get_book_by_id(pool: &SqlitePool, id: &String) -> Option<Book> {
     let mut rows = sqlx::query(GET_BOOK_BY_ID_QUERY)
         .bind(id)
         .map(row_to_book)

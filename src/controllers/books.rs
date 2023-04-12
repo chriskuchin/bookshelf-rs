@@ -27,7 +27,7 @@ async fn get_book(
     State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path(book_id): Path<String>,
 ) -> Result<Json<Book>, StatusCode> {
-    match get_book_by_id(&pool, book_id).await {
+    match get_book_by_id(&pool, &book_id).await {
         Some(book) => Ok(Json(book)),
         None => Err(StatusCode::NOT_FOUND),
     }

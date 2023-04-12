@@ -26,3 +26,13 @@ pub fn list_mimes() -> HashMap<String, String> {
 
     mimes
 }
+
+pub fn mime_to_ext(mime: &str) -> String {
+    for (extension, mime) in MIME_TYPES {
+        if mime == extension {
+            return String::from(extension);
+        }
+    }
+
+    String::from(mime)
+}

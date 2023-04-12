@@ -3,6 +3,7 @@ use crate::controllers::books::get_routes as book_routes;
 use crate::controllers::mime::get_routes as mime_routes;
 use crate::controllers::opds::get_opds;
 use aws_sdk_s3::Client;
+use axum::extract::DefaultBodyLimit;
 use axum::{routing::get, Router};
 use http::Method;
 use serde::{Deserialize, Serialize};
@@ -33,6 +34,7 @@ pub fn get_routes(pool: SqlitePool, storage_client: Client, settings: AppConfig)
         )
         .with_state((pool, storage_client, settings))
         .layer(ServiceBuilder::new().layer(cors))
+        .layer(DefaultBodyLimit::disable())
 }
 
 #[derive(Debug, Serialize, Clone)]
