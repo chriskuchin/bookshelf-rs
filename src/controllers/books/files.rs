@@ -1,16 +1,16 @@
-use super::{AppConfig, Message};
+use super::AppConfig;
 use crate::models::{
-    books::files::get_file_path_by_mime,
+    books::files::{delete_file as delete_book_file, get_file_path_by_mime, insert_file},
     books::{get_book_by_id, get_book_title_by_book_id},
     mime::{ext_to_mime, mime_to_ext},
 };
-use aws_sdk_s3::Client;
+use aws_sdk_s3::{primitives::ByteStream, Client};
 use axum::{
     body::Full,
     extract::{Multipart, Path, State},
     response::{IntoResponse, Response},
     routing::get,
-    Json, Router,
+    Router,
 };
 use http::{header, StatusCode};
 use sqlx::SqlitePool;
@@ -62,14 +62,16 @@ pub async fn get_file(
 pub async fn delete_file(
     State((_pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     Path((book_id, ext)): Path<(String, String)>,
-) -> Json<Message> {
-    Json(Message {
-        msg: format!("delete_file -> {}, {}", book_id, ext),
-    })
+) -> Response {
+    if delete_book_file(&_pool, &book_id, &ext).await {
+        return (StatusCode::OK).into_response();
+    }
+
+    (StatusCode::BAD_REQUEST).into_response()
 }
 
 pub async fn upload_file(
-    State((pool, _storage, _settings)): State<(SqlitePool, Client, AppConfig)>,
+    State((pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
     Path((book_id, ext)): Path<(String, String)>,
     mut multipart: Multipart,
 ) -> Response {
@@ -80,7 +82,6 @@ pub async fn upload_file(
             let key = format!("{}/{}/{}", &book.uuid, &ext, Uuid::new_v4());
 
             if book.files.is_some() {
-                println!("found: {}", &key);
                 for file in book.files.unwrap() {
                     if mime_to_ext(&file.mime_type) == ext {
                         return (StatusCode::CONFLICT).into_response();
@@ -92,12 +93,26 @@ pub async fn upload_file(
                 return (StatusCode::BAD_REQUEST).into_response();
             }
 
-            while let Some(field) = multipart.next_field().await.unwrap() {
-                let file_name = field.file_name().unwrap_or("unknown_file").to_string();
-                let name = field.name().unwrap_or("unknown_name").to_string();
-                let data = field.bytes().await.unwrap();
+            if insert_file(&pool, &book_id, &ext, &key).await.is_some() {
+                while let Some(field) = multipart.next_field().await.unwrap() {
+                    let file_name = field.file_name().unwrap_or("unknown_file").to_string();
+                    let name = field.name().unwrap_or("unknown_name").to_string();
+                    let data = field.bytes().await.unwrap();
 
-                println!("{} {} {}", file_name, name, data.len());
+                    println!("{} {} {}", file_name, name, data.len());
+
+                    match storage
+                        .upload_part()
+                        .bucket(settings.storage_url.as_str())
+                        .body(ByteStream::from(data))
+                        .key(key.as_str())
+                        .send()
+                        .await
+                    {
+                        Ok(_) => continue,
+                        Err(_) => println!("Failed to upload"),
+                    }
+                }
             }
         }
         None => return (StatusCode::NOT_FOUND).into_response(),

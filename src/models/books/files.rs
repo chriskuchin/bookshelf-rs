@@ -72,3 +72,41 @@ pub async fn get_file_path_by_mime(
         Err(_) => None,
     }
 }
+
+const INSERT_FILE_QUERY: &str = "INSERT into files (created_at, updated_at, deleted_at, book_id, mime_type, path) VALUES(NULL, NULL, NULL, ?, ?, ?)";
+pub async fn insert_file(
+    pool: &SqlitePool,
+    book_id: &String,
+    ext: &String,
+    path: &String,
+) -> Option<bool> {
+    let res = sqlx::query(INSERT_FILE_QUERY)
+        .bind(book_id)
+        .bind(ext)
+        .bind(path)
+        .execute(pool)
+        .await
+        .unwrap();
+
+    if res.rows_affected() == 1 {
+        return Some(true);
+    }
+
+    None
+}
+
+const DELETE_FILE_QUERY: &str = "DELETE FROM files where book_id = ? and mime_type = ?";
+pub async fn delete_file(pool: &SqlitePool, book_id: &String, file_type: &String) -> bool {
+    let res = sqlx::query(DELETE_FILE_QUERY)
+        .bind(book_id)
+        .bind(file_type)
+        .execute(pool)
+        .await
+        .unwrap();
+
+    if res.rows_affected() == 1 {
+        return true;
+    }
+
+    false
+}

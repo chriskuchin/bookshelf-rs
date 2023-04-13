@@ -1,4 +1,4 @@
-use super::{AppConfig, Message, PagingOptions};
+use super::{AppConfig, PagingOptions};
 use crate::{
     controllers::books::files::get_routes as file_routes,
     models::books::{
