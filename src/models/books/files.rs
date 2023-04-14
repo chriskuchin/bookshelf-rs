@@ -3,6 +3,8 @@ use futures::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use sqlx::{sqlite::SqliteRow, Row, SqlitePool};
 
+use crate::models::mime::ext_to_mime;
+
 #[derive(sqlx::FromRow, Debug, Serialize, Deserialize, Clone)]
 pub struct File {
     pub id: u32,
@@ -57,12 +59,11 @@ const GET_FILE_PATH_BY_MIME_QUERY: &str =
 pub async fn get_file_path_by_mime(
     pool: &SqlitePool,
     book_id: &String,
-    mime: &String,
     ext: &String,
 ) -> Option<String> {
     let result = sqlx::query(GET_FILE_PATH_BY_MIME_QUERY)
         .bind(book_id)
-        .bind(mime)
+        .bind(ext_to_mime(ext).unwrap())
         .bind(ext)
         .fetch_one(pool)
         .await;
@@ -74,39 +75,37 @@ pub async fn get_file_path_by_mime(
 }
 
 const INSERT_FILE_QUERY: &str = "INSERT into files (created_at, updated_at, deleted_at, book_id, mime_type, path) VALUES(NULL, NULL, NULL, ?, ?, ?)";
-pub async fn insert_file(
-    pool: &SqlitePool,
-    book_id: &String,
-    ext: &String,
-    path: &String,
-) -> Option<bool> {
-    let res = sqlx::query(INSERT_FILE_QUERY)
+pub async fn insert_file(pool: &SqlitePool, book_id: &String, ext: &String, path: &String) -> bool {
+    match sqlx::query(INSERT_FILE_QUERY)
         .bind(book_id)
         .bind(ext)
         .bind(path)
         .execute(pool)
         .await
-        .unwrap();
-
-    if res.rows_affected() == 1 {
-        return Some(true);
-    }
-
-    None
+    {
+        Ok(_) => {
+            return true;
+        }
+        Err(err) => {
+            println!("{}", err);
+            return false;
+        }
+    };
 }
 
 const DELETE_FILE_QUERY: &str = "DELETE FROM files where book_id = ? and mime_type = ?";
-pub async fn delete_file(pool: &SqlitePool, book_id: &String, file_type: &String) -> bool {
-    let res = sqlx::query(DELETE_FILE_QUERY)
+pub async fn delete_file_by_book_id(
+    pool: &SqlitePool,
+    book_id: &String,
+    file_type: &String,
+) -> bool {
+    match sqlx::query(DELETE_FILE_QUERY)
         .bind(book_id)
         .bind(file_type)
         .execute(pool)
         .await
-        .unwrap();
-
-    if res.rows_affected() == 1 {
-        return true;
+    {
+        Ok(_) => return true,
+        Err(_) => return false,
     }
-
-    false
 }

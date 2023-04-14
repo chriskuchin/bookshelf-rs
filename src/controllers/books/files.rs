@@ -1,6 +1,6 @@
 use super::AppConfig;
 use crate::models::{
-    books::files::{delete_file as delete_book_file, get_file_path_by_mime, insert_file},
+    books::files::{delete_file_by_book_id, get_file_path_by_mime, insert_file},
     books::{get_book_by_id, get_book_title_by_book_id},
     mime::{ext_to_mime, mime_to_ext},
 };
@@ -25,7 +25,7 @@ pub async fn get_file(
     Path((book_id, ext)): Path<(String, String)>,
 ) -> Response {
     match ext_to_mime(&ext) {
-        Some(mime) => match get_file_path_by_mime(&pool, &book_id, &mime, &ext).await {
+        Some(mime) => match get_file_path_by_mime(&pool, &book_id, &ext).await {
             Some(path) => {
                 let file = storage
                     .get_object()
@@ -60,11 +60,24 @@ pub async fn get_file(
 }
 
 pub async fn delete_file(
-    State((_pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
+    State((pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
     Path((book_id, ext)): Path<(String, String)>,
 ) -> Response {
-    if delete_book_file(&_pool, &book_id, &ext).await {
-        return (StatusCode::OK).into_response();
+    let key = get_file_path_by_mime(&pool, &book_id, &ext).await.unwrap();
+
+    match storage
+        .delete_object()
+        .bucket(settings.storage_url)
+        .key(key)
+        .send()
+        .await
+    {
+        Ok(_) => {
+            if delete_file_by_book_id(&pool, &book_id, &ext).await {
+                return (StatusCode::OK).into_response();
+            }
+        }
+        Err(err) => println!("{}", err),
     }
 
     (StatusCode::BAD_REQUEST).into_response()
@@ -93,16 +106,15 @@ pub async fn upload_file(
                 return (StatusCode::BAD_REQUEST).into_response();
             }
 
-            if insert_file(&pool, &book_id, &ext, &key).await.is_some() {
+            if insert_file(&pool, &book_id, &ext, &key).await {
                 while let Some(field) = multipart.next_field().await.unwrap() {
-                    let file_name = field.file_name().unwrap_or("unknown_file").to_string();
-                    let name = field.name().unwrap_or("unknown_name").to_string();
+                    // let file_name = field.file_name().unwrap_or("unknown_file").to_string();
+                    // let name = field.name().unwrap_or("unknown_name").to_string();
                     let data = field.bytes().await.unwrap();
-
-                    println!("{} {} {}", file_name, name, data.len());
+                    // println!("{} {} {}", file_name, name, data.len());
 
                     match storage
-                        .upload_part()
+                        .put_object()
                         .bucket(settings.storage_url.as_str())
                         .body(ByteStream::from(data))
                         .key(key.as_str())
@@ -110,7 +122,7 @@ pub async fn upload_file(
                         .await
                     {
                         Ok(_) => continue,
-                        Err(_) => println!("Failed to upload"),
+                        Err(err) => println!("Failed to upload, {}", err),
                     }
                 }
             }
@@ -118,7 +130,5 @@ pub async fn upload_file(
         None => return (StatusCode::NOT_FOUND).into_response(),
     }
 
-    //     let mut f = FSFile::create("test.mobi").unwrap();
-    //     f.write_all(data.to_vec().as_slice()).unwrap();
-    return (StatusCode::NOT_ACCEPTABLE).into_response();
+    return (StatusCode::ACCEPTED).into_response();
 }
