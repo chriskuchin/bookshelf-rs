@@ -118,6 +118,7 @@ pub async fn upload_file(
                         .bucket(settings.storage_url.as_str())
                         .body(ByteStream::from(data))
                         .key(key.as_str())
+                        .set_content_type(ext_to_mime(&ext))
                         .send()
                         .await
                     {
