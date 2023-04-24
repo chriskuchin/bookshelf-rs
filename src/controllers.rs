@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 
 pub mod books;
 pub mod mime;
@@ -24,7 +24,10 @@ pub fn get_routes(pool: SqlitePool, storage_client: Client, settings: AppConfig)
         .allow_origin(Any);
 
     Router::new()
-        .nest_service("/", ServeDir::new("dist"))
+        .nest_service(
+            "/",
+            ServeDir::new("dist").not_found_service(ServeFile::new("index.html")),
+        )
         .route("/opds", get(get_opds))
         .nest(
             "/api/v1",
