@@ -1,26 +1,37 @@
 <template>
   <div>
-    <v-app>
-      <v-app-bar color="blue darken-3" density="compact" :elevation="0">
-        <v-avatar size="32px" item>
-          <v-icon icon="$bookshelf" large></v-icon>
-        </v-avatar>
-        <v-app-bar-title>BookShelf</v-app-bar-title>
-      </v-app-bar>
-      <router-view></router-view>
-    </v-app>
+    <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <a class="navbar-item" href="/">
+          <span class="iconify" data-icon="mdi-bookshelf" height="28"></span>
+        </a>
+
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <div id="navbarBasicExample" class="navbar-menu">
+        <div class="navbar-start">
+        </div>
+
+        <div class="navbar-end">
+          <router-link class="navbar-item" to="/">
+            <span class="iconify" data-icon="mdi-rss" height="28"></span>
+          </router-link>
+        </div>
+      </div>
+    </nav>
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import { VAppBar, VAppBarTitle, VIcon, VAvatar } from 'vuetify/components'
 
 export default {
   components: {
-    VAppBar,
-    VAppBarTitle,
-    VIcon,
-    VAvatar,
   },
   data: function () {
     return {

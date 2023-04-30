@@ -1,1 +1,14 @@
 @charset "utf-8";
+@import "~bulma/bulma";
+
+.box .title {
+  display: block;
+  white-space: nowrap;
+  /* forces text to single line */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.box .tags .tag {
+  text-transform: uppercase;
+}
