@@ -12,3 +12,9 @@
 .box .tags .tag {
   text-transform: uppercase;
 }
+
+.box .downloads .tags.has-addons {
+  display: inline-block;
+  padding: 0 5px 0 0;
+  margin: 0;
+}

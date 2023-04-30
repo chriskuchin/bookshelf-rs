@@ -1,14 +1,19 @@
 <template>
   <div class="section">
-    <div class="box" v-for="(book, index) in books" :key="book.uuid">
+    <div class="box" v-for="book in books" :key="book.uuid">
       <h1 class="title">{{ book.title }}</h1>
       <h2 class="subtitle">{{ book.author }}</h2>
-      <div class="tags">
-        <span
-          :class="['tag', 'is-rounded', { 'is-primary': getTagName(file.type) == 'mobi' }, { 'is-info': getTagName(file.type) == 'pdf' }, { 'is-warning': getTagName(file.type) == 'epub' }]"
-          v-for="(file, index) in book.files" :key="file.path">
-          {{ getTagName(file.type) }}
-        </span>
+      <div class="downloads">
+        <a class="tags has-addons" v-for="file in book.files" :key="file.path" :href="getDownloadLink(book, file)"
+          download>
+          <span v-if="getFormatModifier(file.type) != ''" :class="['tag', 'is-rounded', 'is-dark']">
+            {{ getFormatModifier(file.type) }}
+          </span>
+          <span
+            :class="['tag', 'is-rounded', { 'is-primary': getFileFormat(file.type) == 'mobi' }, { 'is-info': getFileFormat(file.type) == 'pdf' }, { 'is-warning': getFileFormat(file.type) == 'epub' }]">
+            {{ getFileFormat(file.type) }}
+          </span>
+        </a>
       </div>
     </div>
   </div>
@@ -31,6 +36,26 @@ export default {
 
       this.books = await res.json()
     },
+    getFileFormat: function (mime) {
+      let format = this.getTagName(mime)
+      let formatParts = format.split(".")
+
+      if (formatParts.length == 1) {
+        return format
+      } else {
+        return formatParts[1]
+      }
+    },
+    getFormatModifier: function (mime) {
+      let format = this.getTagName(mime)
+      let formatParts = format.split(".")
+
+      if (formatParts.length == 1) {
+        return ""
+      } else {
+        return formatParts[0]
+      }
+    },
     getTagName: function (mime) {
       switch (mime) {
         case "application/x-mobipocket-ebook":
@@ -42,6 +67,9 @@ export default {
         default:
           return mime
       }
+    },
+    getDownloadLink: function (book, file) {
+      return "/api/v1/books/" + book.id + "/files/" + this.getTagName(file.type)
     }
   }
 }
