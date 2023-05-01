@@ -11,7 +11,7 @@ RUN cargo install --path .
 FROM debian:buster-slim
 ENV BOOKSHELF_FRONTEND_LOCATION=/opt/bookshelf/frontend
 
-RUN apt-get update & apt-get install -y extra-runtime-dependencies & rm -rf /var/lib/apt/lists/*
+RUN apt-get update & apt-get install -y --no-install-recommends ca-certificates extra-runtime-dependencies & rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/cargo/bin/bookshelf-rs /usr/local/bin/bookshelf-rs
 COPY --from=webpack /public/dist /opt/bookshelf/frontend
