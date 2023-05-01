@@ -19,6 +19,7 @@ pub struct AppConfig {
     aws_secret_access_key: String,
     aws_s3_region: String,
     aws_s3_endpoint_url: String,
+    frontend_location: Option<String>,
 }
 
 #[tokio::main]
