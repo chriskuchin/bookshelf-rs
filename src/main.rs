@@ -32,7 +32,7 @@ async fn main() {
     let settings = Config::builder()
         .set_default("port", port)
         .unwrap()
-        // .add_source(config::File::with_name("config"))
+        .add_source(config::File::with_name("config"))
         .add_source(config::Environment::with_prefix("BOOKSHELF"))
         .build()
         .unwrap()
