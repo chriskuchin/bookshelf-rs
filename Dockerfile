@@ -3,7 +3,7 @@ ADD . /public
 WORKDIR /public
 RUN npm install && npx webpack
 
-FROM rust:1.68.1 as builder
+FROM rust:1.69-buster as builder
 WORKDIR /usr/src/bookshelf-rs
 COPY . .
 RUN cargo install --path .
