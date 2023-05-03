@@ -114,7 +114,7 @@
           });
         };
 
-        frontend = pkgs.buildNpmPackage {
+        my-frontend = pkgs.buildNpmPackage {
           name = "bookshelf-rs-frontend";
 
           # The packages required by the build process
@@ -134,9 +134,9 @@
           '';
         };
 
-        packages = {
+        packages = rec {
           server = my-crate;
-          frontend = frontend;
+          frontend = my-frontend;
           my-crate-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs // {
             inherit cargoArtifacts;
           });
