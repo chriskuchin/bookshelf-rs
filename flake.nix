@@ -162,6 +162,7 @@
             rustc
             sqlite
             openssl
+            nodejs-18_x
           ];
         };
       });
