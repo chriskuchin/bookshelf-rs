@@ -516,7 +516,6 @@ dependencies = [
  "config",
  "futures",
  "http",
- "libsqlite3-sys",
  "serde",
  "sqlx",
  "tokio",
