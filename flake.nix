@@ -114,11 +114,36 @@
           });
         };
 
+        frontend = pkgs.buildNpmPackage {
+          name = "bookshelf-rs-frontend";
+
+          # The packages required by the build process
+          buildInputs = [
+            pkgs.nodejs-18_x
+          ];
+
+          # The code sources for the package
+          src = ./.;
+          npmDepsHash = "sha256-Ghh9jxxJH7lgn99X1L6WAhrsQhnJlub2cyUUBmSBwfQ=";
+
+          # How the output of the build phase
+          installPhase = ''
+            mkdir $out
+            npm run build
+            cp -r dist/* $out
+          '';
+        };
+
         packages = {
-          default = my-crate;
+          server = my-crate;
+          frontend = frontend;
           my-crate-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs // {
             inherit cargoArtifacts;
           });
+          all = pkgs.symlinkJoin {
+            name = "all";
+            paths = with code; [ server, frontend ];
+          };
         };
 
         apps.default = flake-utils.lib.mkApp {
