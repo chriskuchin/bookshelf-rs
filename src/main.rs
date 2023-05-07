@@ -62,6 +62,7 @@ async fn main() {
 
     let storage_client = Client::from_conf(storage_config);
 
+    println!("{}", &settings.db_url);
     let pool = SqlitePool::connect(&settings.db_url).await.unwrap();
 
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
