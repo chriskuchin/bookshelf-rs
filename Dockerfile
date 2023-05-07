@@ -5,6 +5,9 @@ RUN npm install && npx webpack
 
 FROM rust:1.69-bullseye as builder
 WORKDIR /usr/src/bookshelf-rs
+
+RUN apt-get update && apt-get install -y build-essential libssl-dev
+
 COPY . .
 RUN cargo build --release
 
