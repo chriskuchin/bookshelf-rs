@@ -30,7 +30,7 @@ pub struct AppConfig {
     #[arg(long, env = "BOOKSHELF_AWS_S3_REGION")]
     aws_s3_region: String,
 
-    #[arg(long, env = "BOOKSHELF_S3_ENDPOINT_URL")]
+    #[arg(long, env = "BOOKSHELF_AWS_S3_ENDPOINT_URL")]
     aws_s3_endpoint_url: String,
 
     #[arg(short, long, env = "BOOKSHELF_FRONTEND_LOCATION")]
