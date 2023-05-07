@@ -1,20 +1,53 @@
-FROM node:18-alpine AS webpack
-ADD . /public
-WORKDIR /public
-RUN npm install && npx webpack
+# FROM node:18-alpine AS webpack
+# ADD . /public
+# WORKDIR /public
+# RUN npm install && npx webpack
 
-FROM rust:1.69-buster as builder
-WORKDIR /usr/src/bookshelf-rs
+# FROM rust:1.69 as builder
+# WORKDIR /usr/src/bookshelf-rs
+# COPY . .
+# RUN cargo build --release
+
+# FROM alpine
+# ENV BOOKSHELF_FRONTEND_LOCATION=/opt/bookshelf/frontend
+
+# COPY --from=builder /usr/src/bookshelf-rs/target/release/bookshelf-rs /usr/local/bin/bookshelf-rs
+# COPY --from=webpack /public/dist /opt/bookshelf/frontend
+
+# CMD ["bookshelf-rs"]
+
+# Use a Rust image as the base image
+FROM rust:latest as builder
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Copy the Cargo.toml and Cargo.lock files to the container
+COPY Cargo.toml Cargo.lock ./
+
+# Download and compile the dependencies
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs && \
+    cargo build --release && \
+    rm -rf src
+
+# Copy the rest of the application source code to the container
 COPY . .
+
+# Build the application
 RUN cargo build --release
 
-FROM debian:buster-slim
-ENV BOOKSHELF_FRONTEND_LOCATION=/opt/bookshelf/frontend
+# Create a new image from the Alpine Linux base image
+FROM alpine:latest
 
-RUN apt-get update & apt-get install -y --no-install-recommends ca-certificates extra-runtime-dependencies & rm -rf /var/lib/apt/lists/*
+# Set the working directory to /app
+WORKDIR /app
 
+# Copy the binary from the builder stage to the container
+COPY --from=builder /app/target/release/bookshelf-rs .
 
-COPY --from=builder /usr/src/bookshelf-rs/target/release/bookshelf-rs /usr/local/bin/bookshelf-rs
-COPY --from=webpack /public/dist /opt/bookshelf/frontend
+# Set the application to run on port 8080
+EXPOSE 8080
 
-CMD ["bookshelf-rs"]
+# Run the application
+CMD ["./bookshelf-rs"]
