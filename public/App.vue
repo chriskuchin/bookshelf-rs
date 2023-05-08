@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+    <nav class="navbar is-fixed-top is-transparent" role="navigation" aria-label="main navigation">
       <div class="navbar-brand">
         <a class="navbar-item" href="/">
           <span class="iconify" data-icon="mdi-bookshelf" height="28"></span>
@@ -25,6 +25,18 @@
       </div>
     </nav>
     <router-view></router-view>
+    <!-- <nav class="navbar is-fixed-bottom is-primary" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+      </div>
+
+      <div id="navbarBasicExample" class="navbar-menu">
+        <div class="navbar-start">
+        </div>
+
+        <div class="navbar-end">
+        </div>
+      </div>
+    </nav> -->
   </div>
 </template>
 
