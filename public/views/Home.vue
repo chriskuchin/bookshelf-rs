@@ -16,6 +16,22 @@
         </a>
       </div>
     </div>
+    <div class="fixed-bottom">
+      <a class="button is-primary is-large fab" @click="toggleCreateModal">
+        <icon icon="fa-solid fa-plus"></icon>
+      </a>
+    </div>
+
+    <div :class="['modal', { 'is-active': createModalActive }]">
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="box">
+          <!-- Any other Bulma elements you want -->
+          this is a test
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" @click="toggleCreateModal"></button>
+    </div>
   </div>
 </template>
 
@@ -27,6 +43,7 @@ export default {
   data: function () {
     return {
       books: [],
+      createModalActive: false,
     }
   },
   methods: {
@@ -35,6 +52,9 @@ export default {
       let res = await fetch(url)
 
       this.books = await res.json()
+    },
+    toggleCreateModal: function () {
+      this.createModalActive = !this.createModalActive
     },
     getFileFormat: function (mime) {
       let format = this.getTagName(mime)

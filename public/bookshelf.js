@@ -6,30 +6,18 @@ import router from './routes'
 
 import('./css/bookshelf.scss')
 
-// Vuetify
-import('vuetify/styles')
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
-import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
-import { mdiBookshelf } from '@mdi/js'
+/* import the fontawesome core */
+import { library } from '@fortawesome/fontawesome-svg-core'
 
+/* import font awesome icon component */
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
+/* import specific icons */
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
 
-const vuetify = createVuetify({
-  icons: {
-    defaultSet: 'mdi',
-    aliases: {
-      ...aliases,
-      bookshelf: mdiBookshelf,
-    },
-    sets: {
-      mdi,
-    }
-  },
-  components,
-  directives,
-})
+library.add(faPlus)
 
 var pinia = createPinia()
-createApp(App).use(pinia).use(router).use(vuetify).mount('#app')
+createApp(App)
+  .component('icon', FontAwesomeIcon)
+  .use(pinia).use(router).mount('#app')

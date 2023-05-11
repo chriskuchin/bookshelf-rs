@@ -18,3 +18,17 @@
   padding: 0 5px 0 0;
   margin: 0;
 }
+
+.fab {
+  position: fixed;
+  right: 30px;
+  bottom: 30px;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  padding: 20px;
+  transition: all 0.3s ease-in-out;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+}
