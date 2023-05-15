@@ -5,7 +5,10 @@ use sqlx::{sqlite::SqliteRow, Row, SqlitePool};
 use uuid::Uuid;
 
 use crate::models::books::files::{get_files_by_book_id, File};
+
+pub mod authors;
 pub mod files;
+pub mod series;
 
 #[derive(sqlx::FromRow, Debug, Serialize, Deserialize, Clone)]
 pub struct Book {
