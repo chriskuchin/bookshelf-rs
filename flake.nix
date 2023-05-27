@@ -62,6 +62,28 @@
         # all of that work (e.g. via cachix) when running in CI
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
+        my-frontend = pkgs.buildNpmPackage {
+          name = "ui";
+
+          # The packages required by the build process
+          buildInputs = [
+            pkgs.nodejs-18_x
+          ];
+
+          # The code sources for the package
+          src = ./.;
+          npmDepsHash = "sha256-oht/2PsqU6LH215sXSBmcP0HF+sRrf7ca/utNjk7SVk=";
+
+          # How the output of the build phase
+          installPhase = ''
+            mkdir $out
+            mkdir $out/bin
+            npm run build
+            cp -r dist/ $out/dist
+            cp -r migrations $out/migrations
+          '';
+        };
+
         # Build the actual crate itself, reusing the dependency
         # artifacts from above.
         my-crate = craneLib.buildPackage (commonArgs // {
@@ -114,35 +136,16 @@
           });
         };
 
-        my-frontend = pkgs.buildNpmPackage {
-          name = "bookshelf-rs-frontend";
-
-          # The packages required by the build process
-          buildInputs = [
-            pkgs.nodejs-18_x
-          ];
-
-          # The code sources for the package
-          src = ./.;
-          npmDepsHash = "sha256-Ghh9jxxJH7lgn99X1L6WAhrsQhnJlub2cyUUBmSBwfQ=";
-
-          # How the output of the build phase
-          installPhase = ''
-            mkdir $out
-            npm run build
-            cp -r dist/* $out
-          '';
-        };
-
         packages = rec {
-          server = my-crate;
-          frontend = my-frontend;
+          default = all;
           my-crate-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs // {
             inherit cargoArtifacts;
           });
+          server = my-crate;
+          frontend = my-frontend;
           all = pkgs.symlinkJoin {
             name = "all";
-            paths = with code; [ server, frontend ];
+            paths = [ my-crate my-frontend ];
           };
         };
 
@@ -161,8 +164,6 @@
             cargo
             rustc
             sqlite
-            openssl
-            nodejs-18_x
           ];
         };
       });
