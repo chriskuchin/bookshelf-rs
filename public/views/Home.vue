@@ -48,7 +48,7 @@ export default {
   },
   methods: {
     async listBooks() {
-      let url = "/api/v1/books"
+      let url = "/api/v1/books?limit=100"
       let res = await fetch(url)
 
       this.books = await res.json()
