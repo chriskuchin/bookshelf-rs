@@ -40,7 +40,6 @@ pub async fn get_file(
                     .unwrap_or(String::from("unknown"));
 
                 let attachment_header = format!("attachment; filename = \"{}.{}\"", title, ext);
-                println!("{} \n {}", attachment_header, mime.as_str());
                 let headers = [
                     // (header::CONTENT_TYPE, mime.as_str()),
                     (header::CONTENT_DISPOSITION, attachment_header.as_str()),
