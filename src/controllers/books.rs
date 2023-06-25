@@ -1,6 +1,9 @@
+pub mod authors;
+pub mod files;
+
 use super::{AppConfig, PagingOptions};
 use crate::{
-    controllers::books::files::get_routes as file_routes,
+    controllers::books::{authors::get_routes as author_routes, files::get_routes as file_routes},
     models::books::{
         delete_book_by_id, get_book_by_id, insert_book, list_books, update_book_by_id, Book,
     },
@@ -14,11 +17,10 @@ use axum::{
 };
 use sqlx::SqlitePool;
 
-pub mod files;
-
 pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
     Router::new()
         .route("/", get(get_books).post(create_book))
+        .nest("/authors", author_routes())
         .route("/:id", get(get_book).put(update_book).delete(delete_book))
         .nest("/:id/files", file_routes())
 }
@@ -68,15 +70,20 @@ async fn delete_book(
 async fn get_books(
     State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     paging: Query<PagingOptions>,
-) -> Json<Vec<Book>> {
-    Json(
+) -> Result<Json<Vec<Book>>, StatusCode> {
+    let sort = paging.0.sort.unwrap_or(String::from("title"));
+    if sort != "title" && sort != "author" {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+    Ok(Json(
         list_books(
             &pool,
+            sort,
             paging.0.limit.unwrap_or(10),
             paging.0.offset.unwrap_or(0),
         )
         .await,
-    )
+    ))
 }
 
 async fn create_book(

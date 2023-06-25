@@ -50,4 +50,5 @@ pub struct Message {
 struct PagingOptions {
     limit: Option<u32>,
     offset: Option<u32>,
+    sort: Option<String>,
 }

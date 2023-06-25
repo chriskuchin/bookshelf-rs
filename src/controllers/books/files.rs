@@ -25,7 +25,7 @@ pub async fn get_file(
     Path((book_id, ext)): Path<(String, String)>,
 ) -> Response {
     match ext_to_mime(&ext) {
-        Some(mime) => match get_file_path_by_mime(&pool, &book_id, &ext).await {
+        Some(..) => match get_file_path_by_mime(&pool, &book_id, &ext).await {
             Some(path) => {
                 let file = storage
                     .get_object()

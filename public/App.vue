@@ -15,6 +15,20 @@
 
       <div id="navbarBasicExample" class="navbar-menu">
         <div class="navbar-start">
+          <div class="navbar-item has-dropdown is-hoverable">
+            <a class="navbar-link">
+              Authors
+            </a>
+
+            <div class="navbar-dropdown">
+              <a class="navbar-item">
+                Author 1
+              </a>
+              <a class="navbar-item">
+                Author 2
+              </a>
+            </div>
+          </div>
         </div>
 
         <div class="navbar-end">
@@ -25,18 +39,6 @@
       </div>
     </nav>
     <router-view></router-view>
-    <!-- <nav class="navbar is-fixed-bottom is-primary" role="navigation" aria-label="main navigation">
-      <div class="navbar-brand">
-      </div>
-
-      <div id="navbarBasicExample" class="navbar-menu">
-        <div class="navbar-start">
-        </div>
-
-        <div class="navbar-end">
-        </div>
-      </div>
-    </nav> -->
   </div>
 </template>
 

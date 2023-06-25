@@ -105,9 +105,9 @@ pub async fn get_book_by_id(pool: &SqlitePool, id: &String) -> Option<Book> {
     return None;
 }
 
-const LIST_BOOKS_QUERY: &str = "SELECT * FROM books LIMIT ? OFFSET ?";
-pub async fn list_books(pool: &SqlitePool, limit: u32, offset: u32) -> Vec<Book> {
-    let mut rows = sqlx::query(LIST_BOOKS_QUERY)
+pub async fn list_books(pool: &SqlitePool, sort: String, limit: u32, offset: u32) -> Vec<Book> {
+    let query = format!("SELECT * FROM books ORDER BY {} ASC LIMIT ? OFFSET ?", sort);
+    let mut rows = sqlx::query(&query)
         .bind(limit)
         .bind(offset)
         .map(row_to_book)
