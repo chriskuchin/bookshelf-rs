@@ -1,14 +1,14 @@
-{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/95dc6a031b8365744241990d0ff51698c1b536d7.tar.gz") {} }:
+{ pkgs ? import <nixpkgs> {} }:
 
 pkgs.mkShell {
-  buildInputs = with pkgs; [
-    cargo
+  nativeBuildInputs = with pkgs.buildPackages; [
+    nodejs_18
     rustc
-    clippy
-    rust-analyzer
+    cargo
     rustfmt
-    nodejs
-    tig
+    rust-analyzer
+    clippy
     git
+    tig
   ];
 }

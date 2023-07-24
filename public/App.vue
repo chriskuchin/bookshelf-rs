@@ -16,7 +16,7 @@
 
       <div id="navbarBasicExample" class="navbar-menu" :class="{ 'is-active': activeBurger }">
         <div class="navbar-start">
-          <div class="navbar-item has-dropdown">
+          <div class="navbar-item has-dropdown is-hoverable">
             <a class="navbar-link">
               Authors
             </a>
@@ -30,7 +30,7 @@
               </a>
             </div>
           </div>
-          <div class="navbar-item has-dropdown">
+          <div class="navbar-item has-dropdown is-hoverable">
             <a class="navbar-link">
               Series
             </a>

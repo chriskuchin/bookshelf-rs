@@ -27,7 +27,7 @@ pub fn get_routes(pool: SqlitePool, storage_client: Client, settings: AppConfig)
         .nest_service(
             "/",
             ServeDir::new(settings.clone().frontend_location)
-                .not_found_service(ServeFile::new("index.html")),
+                .not_found_service(ServeFile::new("dist/index.html")),
         )
         .route("/opds", get(get_opds))
         .nest(
