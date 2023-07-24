@@ -23,20 +23,23 @@
     </div>
 
     <div :class="['modal', { 'is-active': createModalActive }]">
-      <div class="modal-background"></div>
+      <div class="modal-background" @click="toggleCreateModal"></div>
       <div class="modal-content">
         <div class="box">
-          <!-- Any other Bulma elements you want -->
-          this is a test
+          <abf />
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" @click="toggleCreateModal"></button>
     </div>
   </div>
 </template>
 
 <script>
+import AddBookForm from '../components/AddBookForm.vue'
+
 export default {
+  components: {
+    "abf": AddBookForm,
+  },
   mounted: function () {
     this.listBooks()
   },
