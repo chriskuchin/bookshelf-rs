@@ -16,6 +16,7 @@
         </a>
       </div>
     </div>
+    <div id="sentinel" ref="sentinel" style="height: 10px;"></div>
     <div class="fixed-bottom">
       <a class="button is-primary is-large fab" @click="toggleCreateModal">
         <icon icon="fa-solid fa-plus"></icon>
@@ -41,20 +42,40 @@ export default {
     "abf": AddBookForm,
   },
   mounted: function () {
-    this.listBooks()
+    const options = {
+      root: null,
+      rootMargin: '5px',
+      threshold: 0.5,
+    };
+
+    const observer = new IntersectionObserver(this.handleIntersection, options);
+    observer.observe(this.$refs.sentinel);
   },
   data: function () {
     return {
       books: [],
+      size: 10,
+      page: 0,
       createModalActive: false,
     }
   },
   methods: {
-    async listBooks() {
-      let url = "/api/v1/books?limit=100"
-      let res = await fetch(url)
+    handleIntersection: function (entries) {
+      if (entries[0].isIntersecting && this.books.length % this.size == 0) {
+        this.listBooks(this.page, this.size)
+        this.page++
+      }
+    },
+    async listBooks(page, size) {
+      let url = `/api/v1/books?limit=${size}&offset=${size * page}`
+      console.log(url)
 
-      this.books = await res.json()
+      let res = await fetch(url)
+      let books = await res.json()
+
+      books.forEach(book => {
+        this.books.push(book)
+      })
     },
     toggleCreateModal: function () {
       this.createModalActive = !this.createModalActive
