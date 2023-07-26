@@ -54,6 +54,18 @@ export default {
   data: function () {
     return {
       books: [],
+      sort: {
+        key: "title",
+        options: [
+          "title",
+          "author"
+        ]
+      },
+      filter: {
+        author: "",
+        series: "",
+        title: "",
+      },
       size: 10,
       page: 0,
       createModalActive: false,
@@ -67,8 +79,15 @@ export default {
       }
     },
     async listBooks(page, size) {
-      let url = `/api/v1/books?limit=${size}&offset=${size * page}`
-      console.log(url)
+      let url = `/api/v1/books?limit=${size}&offset=${size * page}&sort=${this.sort.key}`
+
+      if (this.filter.author != "") {
+        url += `&author=${encodeURI(this.filter.author)}`
+      } else if (this.filter.series != "") {
+        url += `&series=${encodeURI(this.filter.series)}`
+      } else if (this.filter.title != "") {
+        url += `&title=${encodeURI(this.filter.title)}`
+      }
 
       let res = await fetch(url)
       let books = await res.json()

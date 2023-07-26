@@ -21,26 +21,20 @@
               Authors
             </a>
 
-            <div class="navbar-dropdown is-hoverable">
-              <a class="navbar-item">
-                Author 1
-              </a>
-              <a class="navbar-item">
-                Author 2
+            <div class="navbar-dropdown is-hoverable is-boxed" v-if="options.authors.length > 0">
+              <a class="navbar-item" v-for="author in options.authors">
+                {{ author }}
               </a>
             </div>
           </div>
-          <div class="navbar-item has-dropdown is-hoverable">
+          <div class="navbar-item has-dropdown is-hoverable is-boxed" v-if="options.series.length > 0">
             <a class="navbar-link">
               Series
             </a>
 
             <div class="navbar-dropdown is-hoverable">
-              <a class="navbar-item">
-                Series 1
-              </a>
-              <a class="navbar-item">
-                Series 2
+              <a class="navbar-item" v-for="filter in options.series">
+                {{ filter }}
               </a>
             </div>
           </div>
@@ -59,20 +53,37 @@
 </template>
 
 <script>
+import { mapState } from 'pinia'
+import { useFiltersStore } from './stores/filters'
 
 export default {
   components: {
   },
+  mounted: function () {
+    this.getAuthors()
+  },
   data: function () {
     return {
+      options: {
+        authors: [],
+        series: [],
+      },
       activeBurger: false
     }
   },
   methods: {
+    async getAuthors() {
+      let url = `/api/v1/books/authors`
+
+      let res = await fetch(url)
+      this.options.authors = await res.json()
+    },
     toggleBurger: function () {
       this.activeBurger = !this.activeBurger;
     },
   },
-  computed: {}
+  computed: {
+    ...mapState(useFiltersStore, ['author', 'series', 'title'])
+  }
 }
 </script>
