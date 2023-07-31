@@ -3,18 +3,7 @@
     <div class="box" v-for="book in books" :key="book.uuid">
       <h1 class="title">{{ book.title }}</h1>
       <h2 class="subtitle">{{ book.author }}</h2>
-      <div class="downloads">
-        <a class="tags has-addons" v-for="file in book.files" :key="file.path" :href="getDownloadLink(book, file)"
-          download>
-          <span v-if="getFormatModifier(file.type) != ''" :class="['tag', 'is-rounded', 'is-dark']">
-            {{ getFormatModifier(file.type) }}
-          </span>
-          <span
-            :class="['tag', 'is-rounded', { 'is-primary': getFileFormat(file.type) == 'mobi' }, { 'is-info': getFileFormat(file.type) == 'pdf' }, { 'is-warning': getFileFormat(file.type) == 'epub' }]">
-            {{ getFileFormat(file.type) }}
-          </span>
-        </a>
-      </div>
+      <fl :files="book.files" :bookID="book.id" />
     </div>
     <div id="sentinel" ref="sentinel" style="height: 10px;"></div>
     <div class="fixed-bottom">
@@ -27,7 +16,7 @@
       <div class="modal-background" @click="toggleCreateModal"></div>
       <div class="modal-content">
         <div class="box">
-          <abf />
+          <abf @submit="submitCreateBookModal" @cancel="toggleCreateModal" />
         </div>
       </div>
     </div>
@@ -36,10 +25,14 @@
 
 <script>
 import AddBookForm from '../components/AddBookForm.vue'
+import FileList from '../components/FileList.vue'
+import { mapActions } from 'pinia';
+import { useBooksStore } from '../stores/books';
 
 export default {
   components: {
     "abf": AddBookForm,
+    "fl": FileList,
   },
   mounted: function () {
     const options = {
@@ -72,6 +65,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(useBooksStore, ['createBook', 'uploadBookFile']),
     handleIntersection: function (entries) {
       if (entries[0].isIntersecting && this.books.length % this.size == 0) {
         this.listBooks(this.page, this.size)
@@ -96,44 +90,13 @@ export default {
         this.books.push(book)
       })
     },
+    async submitCreateBookModal(book) {
+      this.createBook(book)
+      this.toggleCreateModal()
+    },
     toggleCreateModal: function () {
       this.createModalActive = !this.createModalActive
     },
-    getFileFormat: function (mime) {
-      let format = this.getTagName(mime)
-      let formatParts = format.split(".")
-
-      if (formatParts.length == 1) {
-        return format
-      } else {
-        return formatParts[1]
-      }
-    },
-    getFormatModifier: function (mime) {
-      let format = this.getTagName(mime)
-      let formatParts = format.split(".")
-
-      if (formatParts.length == 1) {
-        return ""
-      } else {
-        return formatParts[0]
-      }
-    },
-    getTagName: function (mime) {
-      switch (mime) {
-        case "application/x-mobipocket-ebook":
-          return "mobi"
-        case "application/pdf":
-          return "pdf"
-        case "application/epub+zip":
-          return "epub"
-        default:
-          return mime
-      }
-    },
-    getDownloadLink: function (book, file) {
-      return "/api/v1/books/" + book.id + "/files/" + this.getTagName(file.type)
-    }
   }
 }
 </script>
