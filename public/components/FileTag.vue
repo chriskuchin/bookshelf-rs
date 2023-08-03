@@ -16,11 +16,8 @@ export default {
   props: ['type', 'modifier', 'bookID'],
   methods: {
     getDownloadLink: function () {
-      console.log(this.bookID, this.type, this.modifier)
       if (this.bookID) {
-        let url = "/api/v1/books/" + this.bookID + "/files/" + this.type
-        console.log(url)
-        return url
+        return "/api/v1/books/" + this.bookID + "/files/" + this.type
       }
 
       return null

@@ -65,7 +65,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(useBooksStore, ['createBook', 'uploadBookFile']),
+    ...mapActions(useBooksStore, ['createBook', 'uploadBookFiles']),
     handleIntersection: function (entries) {
       if (entries[0].isIntersecting && this.books.length % this.size == 0) {
         this.listBooks(this.page, this.size)
@@ -92,6 +92,7 @@ export default {
     },
     async submitCreateBookModal(book) {
       this.createBook(book)
+      this.uploadBookFiles(book.id, book.files)
       this.toggleCreateModal()
     },
     toggleCreateModal: function () {

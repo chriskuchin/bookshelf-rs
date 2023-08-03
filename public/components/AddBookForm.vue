@@ -35,8 +35,8 @@
                 Choose a file…
               </span>
             </span>
-            <span class="file-name">
-              {{ preview }}
+            <span class="file-name tags downloads">
+              <ft v-for="file in preview" :key="file.name" :type="getFileFormatFromName(file.name)" modifier="" />
             </span>
           </label>
         </div>
@@ -63,12 +63,12 @@
 </template>
 
 <script>
-import FileList from './FileList.vue';
+import FileTag from './FileTag.vue';
 
 export default {
   emits: ['cancel', 'submit'],
   components: {
-    'fl': FileList,
+    'ft': FileTag,
   },
   data: function () {
     return {
@@ -101,6 +101,15 @@ export default {
           name: val.name
         })
       })
+    },
+    getFileFormatFromName: function (name) {
+      let formatParts = name.split(".")
+
+      if (formatParts.length == 1) {
+        return format
+      } else {
+        return formatParts[formatParts.length - 1]
+      }
     },
     submit: function () {
       this.$emit('submit', this.book)

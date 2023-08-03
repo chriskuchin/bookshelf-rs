@@ -9,7 +9,7 @@ use axum::{
     body::Full,
     extract::{Multipart, Path, State},
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
     Router,
 };
 use http::{header, StatusCode};
@@ -17,7 +17,9 @@ use sqlx::SqlitePool;
 use uuid::Uuid;
 
 pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
-    Router::new().route("/:ext", get(get_file).delete(delete_file).post(upload_file))
+    Router::new()
+        .route("/", post(batch_file_upload))
+        .route("/:ext", get(get_file).delete(delete_file).post(upload_file))
 }
 
 pub async fn get_file(
@@ -81,6 +83,52 @@ pub async fn delete_file(
     }
 
     (StatusCode::BAD_REQUEST).into_response()
+}
+
+pub async fn batch_file_upload(
+    State((pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
+    Path(book_id): Path<String>,
+    mut multipart: Multipart,
+) -> Response {
+    match get_book_by_id(&pool, &book_id).await {
+        Some(book) => {
+            while let Some(field) = multipart.next_field().await.unwrap() {
+                let file_name = field.file_name().unwrap_or("unknown_file").to_string();
+                let ext = field.name().unwrap_or("unknown_name").to_string();
+                let data = field.bytes().await.unwrap();
+                // println!("{} {} {}", file_name, name, data.len());
+                println!("{}, {}", ext, file_name);
+
+                let key = format!("{}/{}/{}", book.clone().uuid, ext.clone(), Uuid::new_v4());
+
+                for file in book.clone().files.unwrap_or_default() {
+                    if mime_to_ext(&file.mime_type) == ext {
+                        return (StatusCode::CONFLICT).into_response();
+                    }
+                }
+
+                if insert_file(&pool, &book_id, &ext, &key).await {
+                    match storage
+                        .put_object()
+                        .bucket(settings.storage_url.as_str())
+                        .body(ByteStream::from(data))
+                        .key(key.as_str())
+                        .set_content_type(ext_to_mime(&ext))
+                        .send()
+                        .await
+                    {
+                        Ok(_) => continue,
+                        Err(err) => {
+                            println!("Failed to upload, {}", err);
+                            return (StatusCode::BAD_GATEWAY).into_response();
+                        }
+                    }
+                }
+            }
+            return (StatusCode::OK).into_response();
+        }
+        None => return (StatusCode::PRECONDITION_REQUIRED).into_response(),
+    }
 }
 
 pub async fn upload_file(

@@ -11,6 +11,8 @@ use sqlx::SqlitePool;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
+use tower_http::trace::{self, TraceLayer};
+use tracing::Level;
 
 pub mod books;
 pub mod mime;
@@ -39,6 +41,11 @@ pub fn get_routes(pool: SqlitePool, storage_client: Client, settings: AppConfig)
         .with_state((pool, storage_client, settings))
         .layer(ServiceBuilder::new().layer(cors))
         .layer(DefaultBodyLimit::disable())
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
+        )
 }
 
 #[derive(Debug, Serialize, Clone)]
