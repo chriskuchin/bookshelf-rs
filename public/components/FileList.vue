@@ -16,7 +16,8 @@ export default {
   props: ['files', 'bookID'],
   methods: {
     getFileFormat: function (mime) {
-      let formatParts = this.getTagNameFromType(mime).split(".")
+      let format = this.getTagNameFromType(mime)
+      let formatParts = format.split(".")
 
       if (formatParts.length == 1) {
         return format
@@ -25,7 +26,8 @@ export default {
       }
     },
     getFormatModifier: function (mime) {
-      let formatParts = this.getTagNameFromType(mime).split(".")
+      let format = this.getTagNameFromType(mime)
+      let formatParts = format.split(".")
 
       if (formatParts.length == 1) {
         return ""
