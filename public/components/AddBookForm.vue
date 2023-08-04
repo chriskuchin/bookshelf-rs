@@ -138,7 +138,6 @@ export default {
   computed: {
     previewFiles: function () {
       Object.values(this.files).forEach(val => {
-        console.log("NAME: ", val.name)
         this.preview.push({
           name: val.name
         })
