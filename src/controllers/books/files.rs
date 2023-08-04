@@ -120,7 +120,7 @@ pub async fn batch_file_upload(
                         Ok(_) => continue,
                         Err(err) => {
                             println!("Failed to upload, {}", err);
-                            return (StatusCode::BAD_GATEWAY).into_response();
+                            return (StatusCode::BAD_REQUEST).into_response();
                         }
                     }
                 }

@@ -90,9 +90,9 @@ export default {
         this.books.push(book)
       })
     },
-    async submitCreateBookModal(book) {
-      this.createBook(book)
-      this.uploadBookFiles(book.id, book.files)
+    async submitCreateBookModal(book, files) {
+      let id = await this.createBook(book)
+      this.uploadBookFiles(id, files)
       this.toggleCreateModal()
     },
     toggleCreateModal: function () {

@@ -174,7 +174,7 @@ pub async fn update_book_by_id(
 }
 
 const INSERT_BOOK_QUERY: &str = "INSERT INTO books (created_at, updated_at, deleted_at, uuid, isbn, title, author, description, cover_url, publisher, pub_date) VALUES(NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?)";
-pub async fn insert_book(pool: &SqlitePool, book: Book) -> Result<u64, sqlx::Error> {
+pub async fn insert_book(pool: &SqlitePool, book: Book) -> Result<i64, sqlx::Error> {
     let result = sqlx::query(INSERT_BOOK_QUERY)
         .bind(Uuid::new_v4().to_string())
         .bind(book.isbn)
@@ -188,7 +188,7 @@ pub async fn insert_book(pool: &SqlitePool, book: Book) -> Result<u64, sqlx::Err
         .await;
 
     match result {
-        Ok(val) => Ok(val.rows_affected()),
+        Ok(val) => Ok(val.last_insert_rowid()),
         Err(err) => Err(err),
     }
 }

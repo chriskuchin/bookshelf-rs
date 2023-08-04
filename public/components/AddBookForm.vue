@@ -36,7 +36,8 @@
               </span>
             </span>
             <span class="file-name tags downloads">
-              <ft v-for="file in preview" :key="file.name" :type="getFileFormatFromName(file.name)" modifier="" />
+              <ft v-for="file in preview" :key="file.name" :type="getFileFormatFromName(file.name)"
+                :modifier="getFormatModifierFromName(file.name)" />
             </span>
           </label>
         </div>
@@ -81,7 +82,6 @@ export default {
         publisher: "",
         pub_date: "",
         series: "",
-        files: [],
       },
       files: {},
       preview: [],
@@ -91,9 +91,7 @@ export default {
     fileSelected: function (e) {
       let file = e.target.files[0]
 
-      this.files[file.name] = file
-
-      this.book.files = Object.values(this.files)
+      this.files[this.getFileKeyFromName(file.name)] = file
 
       this.preview = []
       Object.values(this.files).forEach(val => {
@@ -101,6 +99,9 @@ export default {
           name: val.name
         })
       })
+    },
+    getFileKeyFromName: function (name) {
+      return name.substring(name.indexOf(".") + 1)
     },
     getFileFormatFromName: function (name) {
       let formatParts = name.split(".")
@@ -111,8 +112,17 @@ export default {
         return formatParts[formatParts.length - 1]
       }
     },
+    getFormatModifierFromName: function (name) {
+      let formatParts = name.split(".")
+
+      if (formatParts.length == 2) {
+        return ""
+      } else {
+        return formatParts[formatParts.length - 2]
+      }
+    },
     submit: function () {
-      this.$emit('submit', this.book)
+      this.$emit('submit', this.book, this.files)
       this.clear()
     },
     cancel: function () {
@@ -123,7 +133,6 @@ export default {
       this.book.title = ""
       this.book.author = ""
       this.book.series = ""
-      this.book.files = []
     }
   },
   computed: {

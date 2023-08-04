@@ -1,6 +1,6 @@
 <template>
   <div class="downloads">
-    <ft v-for="file in files" :key="file.path" :type="getFileFormat(file)" :modifier="getFormatModifier(file)"
+    <ft v-for="file in files" :key="file.path" :type="getFileFormat(file.type)" :modifier="getFormatModifier(file.type)"
       :bookID="bookID" />
   </div>
 </template>
@@ -15,35 +15,8 @@ export default {
   },
   props: ['files', 'bookID'],
   methods: {
-    getFileFormat: function (file) {
-      if (file && file.type) {
-        return this.getFileFormatFromType(file.type)
-      } else if (file && file.name) {
-        getFileFormatFromName(file.name)
-      }
-
-      return ""
-    },
-    getFormatModifier: function (file) {
-      if (file && file.type) {
-        return this.getFormatModifierFromType(file.type)
-      } else if (file && file.name) {
-        return getFormatModifierFromName(file.name)
-      }
-
-      return ""
-    },
-    getFileFormatFromName: function (name) {
-      let format = this.getTagNameFromType(name)
-      let formatParts = format.split(".")
-
-      if (formatParts.length == 1) {
-        return format
-      } else {
-        return formatParts[formatParts.length - 1]
-      }
-    },
-    getFileFormatFromType: function (mime) {
+    getFileFormat: function (mime) {
+      console.log(mime)
       let format = this.getTagNameFromType(mime)
       let formatParts = format.split(".")
 
@@ -53,19 +26,11 @@ export default {
         return formatParts[1]
       }
     },
-    getFormatModifierFromName: function (name) {
-      let format = this.getTagNameFromName(name)
-      let formatParts = format.split(".")
-
-      if (formatParts.length == 2 || formatParts.length == 1) {
-        return ""
-      } else {
-        return formatParts[formatParts.length - 2]
-      }
-    },
-    getFormatModifierFromType: function (mime) {
+    getFormatModifier: function (mime) {
       let format = this.getTagNameFromType(mime)
       let formatParts = format.split(".")
+
+      console.log(format, formatParts, formatParts.length)
 
       if (formatParts.length == 1) {
         return ""
@@ -85,11 +50,8 @@ export default {
           return mime
       }
     },
-    getDownloadLink: function (book, file) {
-      if (file && file.type)
-        return "/api/v1/books/" + book.id + "/files/" + this.getTagNameFromType(file.type)
-
-      return ""
+    getDownloadLink: function (bookID, file) {
+      return "/api/v1/books/" + bookID + "/files/" + this.getTagNameFromType(file.type)
     }
   }
 }

@@ -89,7 +89,7 @@ async fn get_books(
 async fn create_book(
     State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
     extract::Json(payload): extract::Json<Book>,
-) -> Result<Json<u64>, StatusCode> {
+) -> Result<Json<i64>, StatusCode> {
     let result = insert_book(&pool, payload).await;
     match result {
         Ok(val) => Ok(Json(val)),

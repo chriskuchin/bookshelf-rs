@@ -17,7 +17,7 @@ export default {
   methods: {
     getDownloadLink: function () {
       if (this.bookID) {
-        return "/api/v1/books/" + this.bookID + "/files/" + this.type
+        return "/api/v1/books/" + this.bookID + "/files/" + this.modifier + "." + this.type
       }
 
       return null
