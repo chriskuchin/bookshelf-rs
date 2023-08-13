@@ -15,9 +15,16 @@
 export default {
   props: ['type', 'modifier', 'bookID'],
   methods: {
+    getFileType: function () {
+      if (this.modifier) {
+        return this.modifier + "." + this.type
+      }
+
+      return this.type
+    },
     getDownloadLink: function () {
       if (this.bookID) {
-        return "/api/v1/books/" + this.bookID + "/files/" + this.modifier + "." + this.type
+        return "/api/v1/books/" + this.bookID + "/files/" + this.getFileType()
       }
 
       return null
