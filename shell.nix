@@ -10,6 +10,7 @@ pkgs.mkShell {
     clippy
     git
     tig
+    nomad
   ];
 
   # Certain Rust tools won't work without this

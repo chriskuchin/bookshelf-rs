@@ -3,6 +3,7 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 const { DefinePlugin } = require('webpack');
+const { GenerateSW } = require('workbox-webpack-plugin');
 
 module.exports = (env, argv) => {
   var mode = "production"
@@ -68,6 +69,28 @@ module.exports = (env, argv) => {
       ]
     },
     plugins: [
+      new GenerateSW({
+        skipWaiting: true,
+        clientsClaim: true,
+        // runtimeCaching: [{
+        //   urlPattern: new RegExp('/api/.*'),
+        //   method: 'POST',
+        //   handler: 'NetworkOnly',
+        //   options: {
+        //     backgroundSync: {
+        //       name: 'api-retry',
+        //       options: {
+        //         maxRetentionTime: 24 * 60,
+        //       },
+        //     },
+        //     // plugins: [statusPlugin]
+        //   }
+        // }, {
+        //   urlPattern: new RegExp('/api/.*'),
+        //   method: 'GET',
+        //   handler: 'NetworkFirst'
+        // }]
+      }),
       new DefinePlugin({
         __VUE_OPTIONS_API__: true,
         __VUE_PROD_DEVTOOLS__: false,

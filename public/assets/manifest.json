@@ -1,9 +1,9 @@
 {
   "name": "bookshelf",
   "short_name": "bookshelf",
-  "theme_color": "#fff",
-  "background_color": "#fff",
-  "display": "browser",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
   "orientation": "portrait",
   "scope": "/",
   "start_url": "/",
