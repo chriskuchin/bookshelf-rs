@@ -21,3 +21,5 @@ var pinia = createPinia()
 createApp(App)
   .component('icon', FontAwesomeIcon)
   .use(pinia).use(router).mount('#app')
+
+require('./assets/')

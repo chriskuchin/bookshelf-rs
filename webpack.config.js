@@ -21,14 +21,30 @@ module.exports = (env, argv) => {
       filename: '[name].[contenthash].js',
       path: path.resolve(__dirname, './dist'),
       clean: true,
+      publicPath: '/',
     },
     module: {
       rules: [
         {
+          test: /\.json/,
+          type: 'asset/resource',
+          generator: {
+            filename: '[name][ext]'
+          }
+        },
+        {
           test: /\.(jpg|png)$/,
-          use: {
-            loader: 'url-loader',
-          },
+          type: 'asset/resource',
+          generator: {
+            filename: 'images/[name][ext]'
+          }
+        },
+        {
+          test: (value) => value.includes("icon-"),
+          type: 'asset/resource',
+          generator: {
+            filename: 'images/icons/[name][ext]'
+          }
         },
         {
           test: /\.vue$/,
