@@ -32,3 +32,23 @@
 .fab:hover {
   transform: scale(1.1);
 }
+
+// .epub-container {
+//   min-width: 320px;
+//   margin: 0 auto;
+//   position: relative;
+// }
+
+#reader .epub-container .epub-view iframe {
+  background: white;
+  box-shadow: 0 0 4px #ccc;
+  /*margin: 10px;
+    padding: 20px;*/
+}
+
+#reader {
+  width: 600px;
+  height: 100vh;
+  // overflow: auto;
+  margin: 0 auto;
+}
