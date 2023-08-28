@@ -2,7 +2,7 @@ const { VueLoaderPlugin } = require('vue-loader');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
-const { DefinePlugin } = require('webpack');
+const { DefinePlugin, ProvidePlugin } = require('webpack');
 const { GenerateSW } = require('workbox-webpack-plugin');
 
 module.exports = (env, argv) => {
@@ -69,27 +69,30 @@ module.exports = (env, argv) => {
       ]
     },
     plugins: [
+      new ProvidePlugin({
+        JSZip: 'jszip',
+      }),
       new GenerateSW({
         skipWaiting: true,
         clientsClaim: true,
-        // runtimeCaching: [{
-        //   urlPattern: new RegExp('/api/.*'),
-        //   method: 'POST',
-        //   handler: 'NetworkOnly',
-        //   options: {
-        //     backgroundSync: {
-        //       name: 'api-retry',
-        //       options: {
-        //         maxRetentionTime: 24 * 60,
-        //       },
-        //     },
-        //     // plugins: [statusPlugin]
-        //   }
-        // }, {
-        //   urlPattern: new RegExp('/api/.*'),
-        //   method: 'GET',
-        //   handler: 'NetworkFirst'
-        // }]
+        runtimeCaching: [{
+          urlPattern: new RegExp('/api/.*'),
+          method: 'POST',
+          handler: 'NetworkOnly',
+          options: {
+            backgroundSync: {
+              name: 'api-retry',
+              options: {
+                maxRetentionTime: 24 * 60,
+              },
+            },
+            // plugins: [statusPlugin]
+          }
+        }, {
+          urlPattern: new RegExp('/api/.*'),
+          method: 'GET',
+          handler: 'NetworkFirst'
+        }]
       }),
       new DefinePlugin({
         __VUE_OPTIONS_API__: true,
