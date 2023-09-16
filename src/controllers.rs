@@ -6,7 +6,7 @@ use aws_sdk_s3::Client;
 use axum::extract::DefaultBodyLimit;
 use axum::{routing::get, Router};
 use http::Method;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::SqlitePool;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
@@ -51,11 +51,4 @@ pub fn get_routes(pool: SqlitePool, storage_client: Client, settings: AppConfig)
 #[derive(Debug, Serialize, Clone)]
 pub struct Message {
     msg: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct PagingOptions {
-    limit: Option<u32>,
-    offset: Option<u32>,
-    sort: Option<String>,
 }

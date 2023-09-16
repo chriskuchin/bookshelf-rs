@@ -11,6 +11,7 @@ pkgs.mkShell {
     git
     tig
     nomad
+    sqlite
   ];
 
   # Certain Rust tools won't work without this

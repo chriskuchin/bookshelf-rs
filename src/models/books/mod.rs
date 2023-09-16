@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{serde::ts_milliseconds_option, DateTime, Utc};
 use futures::TryStreamExt;
 use serde::{Deserialize, Serialize};
@@ -105,9 +107,42 @@ pub async fn get_book_by_id(pool: &SqlitePool, id: &String) -> Option<Book> {
     return None;
 }
 
-pub async fn list_books(pool: &SqlitePool, sort: String, limit: u32, offset: u32) -> Vec<Book> {
-    let query = format!("SELECT * FROM books ORDER BY {} ASC LIMIT ? OFFSET ?", sort);
-    let mut rows = sqlx::query(&query)
+pub async fn list_books(
+    pool: &SqlitePool,
+    sort: String,
+    limit: u32,
+    offset: u32,
+    filter: HashMap<String, String>,
+) -> Vec<Book> {
+    let mut query = format!("SELECT * FROM books");
+
+    let mut first_loop = true;
+    let mut values: Vec<String> = Vec::new();
+    for (field, value) in filter {
+        if first_loop {
+            query = format!("{} WHERE", query);
+            first_loop = false;
+        }
+
+        if field == "author" {
+            query = format!("{} author like ?", query);
+            values.push(value);
+        } else if field == "title" {
+            query = format!("{} title like ?", query);
+            values.push(format!("{}%", value));
+        }
+    }
+
+    query = format!("{} ORDER BY {} ASC LIMIT ? OFFSET ?", query, sort);
+    // println!("{}", query);
+
+    let mut query_exec = sqlx::query(&query);
+
+    for val in values {
+        query_exec = query_exec.bind(val);
+    }
+
+    let mut rows = query_exec
         .bind(limit)
         .bind(offset)
         .map(row_to_book)
