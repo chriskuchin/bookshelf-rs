@@ -79,7 +79,6 @@ export default {
   },
   methods: {
     selectAuthor(author) {
-      console.log(author)
       this.setAuthorFilter(author)
     },
     async getAuthors() {
