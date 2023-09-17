@@ -22,7 +22,7 @@
             </a>
 
             <div class="navbar-dropdown is-hoverable is-boxed" v-if="options.authors.length > 0">
-              <a class="navbar-item" v-for="author in options.authors">
+              <a class="navbar-item" @click="selectAuthor(author)" v-for="author in options.authors">
                 {{ author }}
               </a>
             </div>
@@ -38,9 +38,7 @@
               </a>
             </div>
           </div>
-
         </div>
-
         <div class="navbar-end">
           <router-link class="navbar-item" to="/">
             <span class="iconify" data-icon="mdi-rss" height="28"></span>
@@ -53,7 +51,7 @@
 </template>
 
 <script>
-import { mapState } from 'pinia'
+import { mapState, mapActions } from 'pinia'
 import { useFiltersStore } from './stores/filters'
 
 export default {
@@ -72,6 +70,10 @@ export default {
     }
   },
   methods: {
+    selectAuthor(author) {
+      console.log(author)
+      this.setAuthorFilter(author)
+    },
     async getAuthors() {
       let url = `/api/v1/books/authors`
 
@@ -81,6 +83,7 @@ export default {
     toggleBurger: function () {
       this.activeBurger = !this.activeBurger;
     },
+    ...mapActions(useFiltersStore, ['setAuthorFilter']),
   },
   computed: {
     ...mapState(useFiltersStore, ['author', 'series', 'title'])
