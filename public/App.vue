@@ -22,7 +22,15 @@
             </a>
 
             <div class="navbar-dropdown is-hoverable is-boxed" v-if="options.authors.length > 0">
+              <a class="navbar-item" @click="selectAuthor('')">
+                <icon icon="fa-solid fa-check" v-if="isSelectedAuthor('')" class="mr-2"></icon>
+                <span v-else class="mr-2" style="display: inline-block; width: 12.25px;"></span>
+                None
+              </a>
+              <hr class="dropdown-divider">
               <a class="navbar-item" @click="selectAuthor(author)" v-for="author in options.authors">
+                <icon icon="fa-solid fa-check" class="mr-2" v-if="isSelectedAuthor(author)"></icon>
+                <span v-else class="mr-2" style="display: inline-block; width: 12.25px;"></span>
                 {{ author }}
               </a>
             </div>
@@ -86,7 +94,7 @@ export default {
     ...mapActions(useFiltersStore, ['setAuthorFilter']),
   },
   computed: {
-    ...mapState(useFiltersStore, ['author', 'series', 'title'])
+    ...mapState(useFiltersStore, ['author', 'series', 'title', 'isSelectedAuthor'])
   }
 }
 </script>

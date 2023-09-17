@@ -23,6 +23,7 @@ export const useFiltersStore = defineStore("filters", {
 
       return filters.toString()
     },
+    isSelectedAuthor: (state) => (author) => author == state.author
   },
   actions: {
     setAuthorFilter(author) {
