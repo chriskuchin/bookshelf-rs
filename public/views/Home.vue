@@ -26,8 +26,9 @@
 <script>
 import AddBookForm from '../components/AddBookForm.vue'
 import FileList from '../components/FileList.vue'
-import { mapActions } from 'pinia';
+import { mapActions, mapState } from 'pinia';
 import { useBooksStore } from '../stores/books';
+import { useFiltersStore } from '../stores/filters';
 
 export default {
   components: {
@@ -43,6 +44,14 @@ export default {
 
     const observer = new IntersectionObserver(this.handleIntersection, options);
     observer.observe(this.$refs.sentinel);
+
+    const filterStore = useFiltersStore()
+    var that = this
+    filterStore.$subscribe((mut, state) => {
+      that.page = 0
+      that.books = []
+      that.listBooks(that.page, that.size)
+    })
   },
   data: function () {
     return {
@@ -64,7 +73,9 @@ export default {
       createModalActive: false,
     }
   },
+  computed: {},
   methods: {
+    ...mapState(useFiltersStore, ['getFilters']),
     ...mapActions(useBooksStore, ['createBook', 'uploadBookFiles']),
     handleIntersection: function (entries) {
       if (entries[0].isIntersecting && this.books.length % this.size == 0) {
@@ -82,6 +93,8 @@ export default {
       } else if (this.filter.title != "") {
         url += `&title=${encodeURI(this.filter.title)}`
       }
+
+      url += `&${this.getFilters()}`
 
       let res = await fetch(url)
       let books = await res.json()

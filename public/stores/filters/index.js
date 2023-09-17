@@ -9,6 +9,22 @@ export const useFiltersStore = defineStore("filters", {
       title: "",
     }
   },
+  getters: {
+    getFilters: (state) => {
+      let filters = new URLSearchParams()
+
+      if (state.author != "") {
+        filters.append("author", state.author)
+      }
+
+      if (state.title != "") {
+        filters.append("title", state.title)
+      }
+
+      return filters.toString()
+    },
+    isSelectedAuthor: (state) => (author) => author == state.author
+  },
   actions: {
     setAuthorFilter(author) {
       this.series = ""
