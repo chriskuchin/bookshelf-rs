@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
-pub const MIME_TYPES: [(&'static str, &'static str); 6] = [
+pub const MIME_TYPES: [(&'static str, &'static str); 7] = [
     ("azw3", "application/x-mobi8-ebook"),
-    ("epub", "application/epub+zip"),
+    ("epub", "application/epub"),
     ("fb2", "application/fb2+zip"),
     ("mobi", "application/x-mobipocket-ebook"),
     ("pdf", "application/pdf"),
+    ("zip", "application/zip"),
     ("txt", "text/plain"),
 ];
 
