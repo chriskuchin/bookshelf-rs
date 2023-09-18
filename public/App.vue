@@ -21,7 +21,8 @@
               Authors
             </a>
 
-            <div class="navbar-dropdown is-hoverable is-boxed" v-if="options.authors.length > 0">
+            <div class="navbar-dropdown is-hoverable is-boxed" v-if="options.authors.length > 0"
+              style="overflow-y: auto;">
               <a class="navbar-item" @click="selectAuthor('')">
                 <icon icon="fa-solid fa-check" v-if="isSelectedAuthor('')" class="mr-2"></icon>
                 <span v-else class="mr-2" style="display: inline-block; width: 12.25px;"></span>
