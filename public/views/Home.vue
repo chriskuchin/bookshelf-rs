@@ -1,7 +1,10 @@
 <template>
   <div class="section" style="padding-top: 15px;">
     <div class="box" v-for="book in books" :key="book.uuid">
-      <h1 class="title">{{ book.title }}</h1>
+      <h1 class="title">
+        {{ book.title }}
+      </h1>
+      <!-- <a @click=""><icon icon="fa-solid fa-pencil"></icon></a> -->
       <h2 class="subtitle">{{ book.author }}</h2>
       <fl :files="book.files" :bookID="book.id" />
     </div>

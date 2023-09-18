@@ -13,7 +13,7 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 /* import specific icons */
-import { faPlus, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faCheck, faPencil } from '@fortawesome/free-solid-svg-icons'
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -25,7 +25,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-library.add(faPlus, faCheck)
+library.add(faPlus, faCheck, faPencil)
 
 var pinia = createPinia()
 createApp(App)

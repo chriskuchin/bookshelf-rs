@@ -4,7 +4,7 @@
       {{ modifier }}
     </span>
     <span
-      :class="['tag', 'is-rounded', { 'is-primary': type == 'mobi' }, { 'is-info': type == 'pdf' }, { 'is-warning': type == 'epub' }]">
+      :class="['tag', 'is-rounded', { 'is-primary': type == 'mobi' }, { 'is-info': type == 'pdf' }, { 'is-warning': type == 'epub' }, { 'is-link': type == 'zip' }]">
       {{ type }}
     </span>
   </a>
