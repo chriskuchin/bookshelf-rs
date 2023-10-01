@@ -21,36 +21,7 @@
       </div>
     </div> -->
 
-    <div class="field">
-      <label class="label">Book File</label>
-      <div class="control">
-        <div class="file has-name is-fullwidth">
-          <label class="file-label">
-            <input class="file-input" type="file" name="resume" v-on:change="fileSelected">
-            <span class="file-cta">
-              <span class="file-icon">
-                <i class="fas fa-upload"></i>
-              </span>
-              <span class="file-label">
-                Choose a file…
-              </span>
-            </span>
-            <span class="file-name tags downloads">
-              <ft v-for="file in preview" :key="file.name" :type="getFileFormatFromName(file.name)"
-                :modifier="getFormatModifierFromName(file.name)" />
-            </span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <!-- <fl :files="preview" bookID="other" /> -->
-    <!-- <div class="field">
-      <label class="label">Message</label>
-      <div class="control">
-        <textarea class="textarea" placeholder="Textarea"></textarea>
-      </div>
-    </div> -->
+    <fi @file="fileSelected" :files="files" />
 
     <div class="field is-grouped">
       <div class="control">
@@ -64,12 +35,12 @@
 </template>
 
 <script>
-import FileTag from './FileTag.vue';
+import FileInput from './FileInput.vue';
 
 export default {
   emits: ['cancel', 'submit'],
   components: {
-    'ft': FileTag,
+    'fi': FileInput,
   },
   data: function () {
     return {
@@ -84,21 +55,11 @@ export default {
         series: "",
       },
       files: {},
-      preview: [],
     }
   },
   methods: {
-    fileSelected: function (e) {
-      let file = e.target.files[0]
-
-      this.files[this.getFileKeyFromName(file.name)] = file
-
-      this.preview = []
-      Object.values(this.files).forEach(val => {
-        this.preview.push({
-          name: val.name
-        })
-      })
+    fileSelected: function (files) {
+      this.files = files
     },
     getFileKeyFromName: function (name) {
       return name.substring(name.indexOf(".") + 1)

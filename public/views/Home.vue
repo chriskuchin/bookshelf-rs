@@ -1,6 +1,24 @@
 <template>
   <div class="section" style="padding-top: 15px;">
     <div class="box" v-for="book in books" :key="book.uuid">
+      <div class="has-text-right">
+        <div class="dropdown is-hoverable is-right">
+          <div class="dropdown-trigger">
+            <span class="icon is-clickable" aria-haspopup="true" aria-controls="dropdown-menu">
+              <icon icon="fa-solid fa-ellipsis-v"></icon>
+            </span>
+          </div>
+          <div class="dropdown-menu" id="dropdown-menu" role="menu">
+            <div class="dropdown-content">
+              <a class="dropdown-item" @click="openUploadModal(book.id)">
+                <icon icon="fa-solid fa-upload"></icon>
+                Upload Files
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <h1 class="title">
         {{ book.title }}
       </h1>
@@ -23,11 +41,22 @@
         </div>
       </div>
     </div>
+
+    <div :class="['modal', { 'is-active': uploadModal.active }]">
+      <div class="modal-background" @click="toggleUploadModal"></div>
+      <div class="modal-content">
+        <div class="box">
+          <uff :bookID="uploadModal.id" @submit="submitUploadModal" @cancel="toggleUploadModal" />
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
 import AddBookForm from '../components/AddBookForm.vue'
+import UploadFileForm from '../components/UploadFileForm.vue'
 import FileList from '../components/FileList.vue'
 import { mapActions, mapState } from 'pinia';
 import { useBooksStore } from '../stores/books';
@@ -36,6 +65,7 @@ import { useFiltersStore } from '../stores/filters';
 export default {
   components: {
     "abf": AddBookForm,
+    "uff": UploadFileForm,
     "fl": FileList,
   },
   mounted: function () {
@@ -58,6 +88,10 @@ export default {
   },
   data: function () {
     return {
+      uploadModal: {
+        active: false,
+        id: "",
+      },
       books: [],
       sort: {
         key: "title",
@@ -89,14 +123,6 @@ export default {
     async listBooks(page, size) {
       let url = `/api/v1/books?limit=${size}&offset=${size * page}&sort=${this.sort.key}`
 
-      if (this.filter.author != "") {
-        url += `&author=${encodeURI(this.filter.author)}`
-      } else if (this.filter.series != "") {
-        url += `&series=${encodeURI(this.filter.series)}`
-      } else if (this.filter.title != "") {
-        url += `&title=${encodeURI(this.filter.title)}`
-      }
-
       url += `&${this.getFilters()}`
 
       let res = await fetch(url)
@@ -114,6 +140,20 @@ export default {
     toggleCreateModal: function () {
       this.createModalActive = !this.createModalActive
     },
+    async submitUploadModal(id, files) {
+      console.log(id, files)
+      this.uploadBookFiles(id, files)
+      this.toggleUploadModal()
+      this.uploadModal.id = ""
+    },
+    toggleUploadModal: function () {
+      this.uploadModal.active = !this.uploadModal.active
+    },
+    openUploadModal: function (bookID) {
+      console.log(bookID)
+      this.uploadModal.id = bookID
+      this.uploadModal.active = true
+    }
   }
 }
 </script>
