@@ -54,6 +54,11 @@ async fn main() {
         "bookshelf",
     );
 
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .compact()
+        .init();
+
     let storage_config = StorageConfig::builder()
         .region(Region::new(settings.aws_s3_region.clone()))
         .endpoint_url(&settings.aws_s3_endpoint_url)
