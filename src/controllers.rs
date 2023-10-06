@@ -2,10 +2,15 @@ use super::AppConfig;
 use crate::controllers::books::get_routes as book_routes;
 use crate::controllers::mime::get_routes as mime_routes;
 use crate::controllers::opds::get_opds;
+use crate::controllers::series::get_routes as series_routes;
 use aws_sdk_s3::Client;
 use axum::extract::DefaultBodyLimit;
+use axum::response::IntoResponse;
 use axum::{routing::get, Router};
+
 use http::Method;
+use http::StatusCode;
+
 use serde::Serialize;
 use sqlx::SqlitePool;
 use tower::ServiceBuilder;
@@ -17,6 +22,7 @@ use tracing::Level;
 pub mod books;
 pub mod mime;
 pub mod opds;
+pub mod series;
 
 pub fn get_routes(pool: SqlitePool, storage_client: Client, settings: AppConfig) -> Router<()> {
     let cors = CorsLayer::new()
@@ -36,7 +42,9 @@ pub fn get_routes(pool: SqlitePool, storage_client: Client, settings: AppConfig)
             "/api/v1",
             Router::new()
                 .nest("/books", book_routes())
-                .nest("/mimes", mime_routes()),
+                .nest("/series", series_routes())
+                .nest("/mimes", mime_routes())
+                .fallback(handler_404),
         )
         .with_state((pool, storage_client, settings))
         .layer(ServiceBuilder::new().layer(cors))
@@ -46,6 +54,10 @@ pub fn get_routes(pool: SqlitePool, storage_client: Client, settings: AppConfig)
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
                 .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
         )
+}
+
+async fn handler_404() -> impl IntoResponse {
+    (StatusCode::NOT_FOUND, "nothing to see here")
 }
 
 #[derive(Debug, Serialize, Clone)]

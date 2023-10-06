@@ -32,6 +32,7 @@ export default {
       this.files = files
     },
     submit: function () {
+      console.log(this.bookID, this.files)
       this.$emit('submit', this.bookID, this.files)
       this.clear()
     },

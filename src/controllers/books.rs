@@ -1,16 +1,13 @@
 pub mod authors;
+pub mod book_series;
 pub mod files;
-pub mod series;
 
 use serde::Deserialize;
 use std::collections::HashMap;
 
 use super::AppConfig;
 use crate::{
-    controllers::books::{
-        authors::get_routes as author_routes, files::get_routes as file_routes,
-        series::get_routes as series_routes,
-    },
+    controllers::books::{authors::get_routes as author_routes, files::get_routes as file_routes},
     models::books::{
         delete_book_by_id, get_book_by_id, insert_book, list_books, update_book_by_id, Book,
     },
@@ -30,7 +27,6 @@ pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
         .route("/:id", get(get_book).put(update_book).delete(delete_book))
         .nest("/:id/files", file_routes())
         .nest("/authors", author_routes())
-        .nest("/series", series_routes())
 }
 
 async fn get_book(
