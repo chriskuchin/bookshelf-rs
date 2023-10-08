@@ -1,6 +1,7 @@
 use crate::controllers::get_routes;
 use aws_sdk_s3::config::{Credentials, Region};
 use aws_sdk_s3::{Client, Config as StorageConfig};
+use axum::extract::FromRef;
 use axum::ServiceExt;
 use clap::Parser;
 use serde::Deserialize;
@@ -11,6 +12,14 @@ use tower_http::normalize_path::NormalizePathLayer;
 
 pub mod controllers;
 pub mod models;
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
+pub struct AppState {
+    settings: AppConfig,
+    db_pool: SqlitePool,
+    storage_client: Client,
+}
 
 #[derive(Debug, Deserialize, Clone, Parser)]
 #[allow(unused)]
@@ -62,16 +71,12 @@ async fn main() {
 
     if settings.debug {
         tracing_subscriber::fmt()
-        .with_target(false)
-        .pretty()
-        .compact()
-        .init();
+            .with_target(false)
+            .pretty()
+            .compact()
+            .init();
     } else {
-        tracing_subscriber::fmt()
-        .with_target(false)
-        .json()
-        .init();
-
+        tracing_subscriber::fmt().with_target(false).json().init();
     }
 
     let storage_config = StorageConfig::builder()
@@ -95,4 +100,14 @@ async fn main() {
         )
         .await
         .unwrap();
+}
+
+impl FromRef<(SqlitePool, Client, AppConfig)> for AppState {
+    fn from_ref(app_state: &(SqlitePool, Client, AppConfig)) -> AppState {
+        AppState {
+            settings: app_state.2.clone(),
+            db_pool: app_state.0.clone(),
+            storage_client: app_state.1.clone(),
+        }
+    }
 }

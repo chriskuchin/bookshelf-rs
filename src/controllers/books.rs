@@ -11,6 +11,7 @@ use crate::{
     models::books::{
         delete_book_by_id, get_book_by_id, insert_book, list_books, update_book_by_id, Book,
     },
+    AppState,
 };
 use aws_sdk_s3::Client;
 use axum::{
@@ -30,21 +31,21 @@ pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
 }
 
 async fn get_book(
-    State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
+    State(state): State<AppState>,
     Path(book_id): Path<String>,
 ) -> Result<Json<Book>, StatusCode> {
-    match get_book_by_id(&pool, &book_id).await {
+    match get_book_by_id(&state.db_pool, &book_id).await {
         Some(book) => Ok(Json(book)),
         None => Err(StatusCode::NOT_FOUND),
     }
 }
 
 async fn update_book(
-    State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
+    State(state): State<AppState>,
     Path(book_id): Path<String>,
     extract::Json(payload): extract::Json<Book>,
 ) -> Result<(), StatusCode> {
-    match update_book_by_id(&pool, book_id, payload).await {
+    match update_book_by_id(&state.db_pool, book_id, payload).await {
         Ok(val) => {
             if val == 0 {
                 return Err(StatusCode::NOT_FOUND);
@@ -57,10 +58,10 @@ async fn update_book(
 }
 
 async fn delete_book(
-    State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
+    State(state): State<AppState>,
     Path(book_id): Path<String>,
 ) -> Result<(), StatusCode> {
-    match delete_book_by_id(&pool, book_id).await {
+    match delete_book_by_id(&state.db_pool, book_id).await {
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
         Ok(val) => {
             if val == 0 {

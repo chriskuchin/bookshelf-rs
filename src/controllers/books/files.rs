@@ -1,8 +1,11 @@
 use super::AppConfig;
-use crate::models::{
-    books::files::{delete_file_by_book_id, get_file_path_by_mime, insert_file},
-    books::{get_book_by_id, get_book_title_by_book_id},
-    mime::{ext_to_mime, mime_to_ext},
+use crate::{
+    models::{
+        books::files::{delete_file_by_book_id, get_file_path_by_mime, insert_file},
+        books::{get_book_by_id, get_book_title_by_book_id},
+        mime::{ext_to_mime, mime_to_ext},
+    },
+    AppState,
 };
 use aws_sdk_s3::{primitives::ByteStream, Client};
 use axum::{
@@ -23,21 +26,22 @@ pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
 }
 
 pub async fn get_file(
-    State((pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
+    State(state): State<AppState>,
     Path((book_id, ext)): Path<(String, String)>,
 ) -> Response {
     match ext_to_mime(&ext) {
-        Some(..) => match get_file_path_by_mime(&pool, &book_id, &ext).await {
+        Some(..) => match get_file_path_by_mime(&state.db_pool, &book_id, &ext).await {
             Some(path) => {
-                let file = storage
+                let file = state
+                    .storage_client
                     .get_object()
-                    .bucket(settings.storage_url.clone())
+                    .bucket(state.settings.storage_url.clone())
                     .key(path.clone())
                     .send()
                     .await
                     .unwrap();
 
-                let title = get_book_title_by_book_id(pool, book_id)
+                let title = get_book_title_by_book_id(state.db_pool, book_id)
                     .await
                     .unwrap_or(String::from("unknown"));
 
@@ -62,20 +66,23 @@ pub async fn get_file(
 }
 
 pub async fn delete_file(
-    State((pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
+    State(state): State<AppState>,
     Path((book_id, ext)): Path<(String, String)>,
 ) -> Response {
-    let key = get_file_path_by_mime(&pool, &book_id, &ext).await.unwrap();
+    let key = get_file_path_by_mime(&state.db_pool, &book_id, &ext)
+        .await
+        .unwrap();
 
-    match storage
+    match state
+        .storage_client
         .delete_object()
-        .bucket(settings.storage_url)
+        .bucket(state.settings.storage_url)
         .key(key)
         .send()
         .await
     {
         Ok(_) => {
-            if delete_file_by_book_id(&pool, &book_id, &ext).await {
+            if delete_file_by_book_id(&state.db_pool, &book_id, &ext).await {
                 return (StatusCode::OK).into_response();
             }
         }
@@ -86,11 +93,11 @@ pub async fn delete_file(
 }
 
 pub async fn batch_file_upload(
-    State((pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
+    State(state): State<AppState>,
     Path(book_id): Path<String>,
     mut multipart: Multipart,
 ) -> Response {
-    match get_book_by_id(&pool, &book_id).await {
+    match get_book_by_id(&state.db_pool, &book_id).await {
         Some(book) => {
             while let Some(field) = multipart.next_field().await.unwrap() {
                 let file_name = field.file_name().unwrap_or("unknown_file").to_string();
@@ -107,10 +114,11 @@ pub async fn batch_file_upload(
                     }
                 }
 
-                if insert_file(&pool, &book_id, &ext, &key).await {
-                    match storage
+                if insert_file(&state.db_pool, &book_id, &ext, &key).await {
+                    match state
+                        .storage_client
                         .put_object()
-                        .bucket(settings.storage_url.as_str())
+                        .bucket(state.settings.storage_url.as_str())
                         .body(ByteStream::from(data))
                         .key(key.as_str())
                         .set_content_type(ext_to_mime(&ext))
@@ -132,11 +140,11 @@ pub async fn batch_file_upload(
 }
 
 pub async fn upload_file(
-    State((pool, storage, settings)): State<(SqlitePool, Client, AppConfig)>,
+    State(state): State<AppState>,
     Path((book_id, ext)): Path<(String, String)>,
     mut multipart: Multipart,
 ) -> Response {
-    match get_book_by_id(&pool, &book_id).await {
+    match get_book_by_id(&state.db_pool, &book_id).await {
         // verify book exists
         Some(book) => {
             // generate s3 file name... sha hash of file?
@@ -154,16 +162,17 @@ pub async fn upload_file(
                 return (StatusCode::BAD_REQUEST).into_response();
             }
 
-            if insert_file(&pool, &book_id, &ext, &key).await {
+            if insert_file(&state.db_pool, &book_id, &ext, &key).await {
                 while let Some(field) = multipart.next_field().await.unwrap() {
                     // let file_name = field.file_name().unwrap_or("unknown_file").to_string();
                     // let name = field.name().unwrap_or("unknown_name").to_string();
                     let data = field.bytes().await.unwrap();
                     // println!("{} {} {}", file_name, name, data.len());
 
-                    match storage
+                    match state
+                        .storage_client
                         .put_object()
-                        .bucket(settings.storage_url.as_str())
+                        .bucket(state.settings.storage_url.as_str())
                         .body(ByteStream::from(data))
                         .key(key.as_str())
                         .set_content_type(ext_to_mime(&ext))
