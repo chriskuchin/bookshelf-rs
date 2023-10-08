@@ -54,10 +54,7 @@ async fn main() {
         "bookshelf",
     );
 
-    tracing_subscriber::fmt()
-        .with_target(false)
-        .compact()
-        .init();
+    tracing_subscriber::fmt().with_target(false).json().init();
 
     let storage_config = StorageConfig::builder()
         .region(Region::new(settings.aws_s3_region.clone()))
@@ -72,7 +69,7 @@ async fn main() {
     sqlx::migrate!().run(&pool).await.unwrap();
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    println!("listening on {}", addr);
+    // println!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(get_routes(pool, storage_client, settings).into_make_service())
         .await
