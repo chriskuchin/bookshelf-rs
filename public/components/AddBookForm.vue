@@ -94,6 +94,7 @@ export default {
       this.book.title = ""
       this.book.author = ""
       this.book.series = ""
+      this.files = {}
     }
   },
   computed: {
