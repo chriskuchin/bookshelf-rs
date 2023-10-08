@@ -123,7 +123,10 @@ export default {
     async listBooks(page, size) {
       let url = `/api/v1/books?limit=${size}&offset=${size * page}&sort=${this.sort.key}`
 
-      url += `&${this.getFilters()}`
+      let filters = this.getFilters()
+      if (filters != "")
+        url += `&${filters}`
+
 
       let res = await fetch(url)
       let books = await res.json()

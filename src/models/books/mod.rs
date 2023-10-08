@@ -8,6 +8,8 @@ use uuid::Uuid;
 
 use crate::models::books::files::{get_files_by_book_id, File};
 
+use self::series::{get_book_series_info, BookSeries};
+
 pub mod authors;
 pub mod files;
 pub mod series;
@@ -45,6 +47,9 @@ pub struct Book {
     pub_date: String,
     #[serde(skip_deserializing)]
     pub files: Option<Vec<File>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub series: Option<BookSeries>,
 }
 
 fn row_to_book(row: SqliteRow) -> Book {
@@ -75,6 +80,7 @@ fn row_to_book(row: SqliteRow) -> Book {
         publisher,
         pub_date,
         files: None,
+        series: None,
     }
 }
 
@@ -92,7 +98,7 @@ pub async fn get_book_by_id(pool: &SqlitePool, id: &String) -> Option<Book> {
             created_at: None,
             updated_at: None,
             deleted_at: None,
-            uuid: row.uuid,
+            uuid: row.uuid.clone(),
             isbn: row.isbn,
             title: row.title,
             author: row.author,
@@ -101,6 +107,7 @@ pub async fn get_book_by_id(pool: &SqlitePool, id: &String) -> Option<Book> {
             publisher: row.publisher,
             pub_date: row.pub_date,
             files: Some(files),
+            series: get_book_series_info(&pool, row.uuid).await,
         });
     }
 
@@ -114,7 +121,7 @@ pub async fn list_books(
     offset: u32,
     filter: HashMap<String, String>,
 ) -> Vec<Book> {
-    let mut query = format!("SELECT * FROM books");
+    let mut query = format!("SELECT * FROM books LEFT JOIN book_series ON book_id == uuid");
 
     let mut first_loop = true;
     let mut values: Vec<String> = Vec::new();
@@ -129,7 +136,10 @@ pub async fn list_books(
             values.push(value);
         } else if field == "title" {
             query = format!("{} title like ?", query);
-            values.push(format!("{}%", value));
+            values.push(format!("%{}%", value));
+        } else if field == "series" {
+            query = format!("{} series_id = ?", query);
+            values.push(value);
         }
     }
 
@@ -156,7 +166,7 @@ pub async fn list_books(
             created_at: None,
             updated_at: None,
             deleted_at: None,
-            uuid: row.uuid,
+            uuid: row.uuid.clone(),
             isbn: row.isbn,
             title: row.title,
             author: row.author,
@@ -165,6 +175,7 @@ pub async fn list_books(
             publisher: row.publisher,
             pub_date: row.pub_date,
             files: Some(files),
+            series: get_book_series_info(pool, row.uuid).await,
         })
     }
 

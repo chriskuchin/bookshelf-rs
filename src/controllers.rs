@@ -2,7 +2,6 @@ use super::AppConfig;
 use crate::controllers::books::get_routes as book_routes;
 use crate::controllers::mime::get_routes as mime_routes;
 use crate::controllers::opds::get_opds;
-use crate::controllers::series::get_routes as series_routes;
 use aws_sdk_s3::Client;
 use axum::extract::DefaultBodyLimit;
 use axum::response::IntoResponse;
@@ -42,7 +41,6 @@ pub fn get_routes(pool: SqlitePool, storage_client: Client, settings: AppConfig)
             "/api/v1",
             Router::new()
                 .nest("/books", book_routes())
-                .nest("/series", series_routes())
                 .nest("/mimes", mime_routes())
                 .fallback(handler_404),
         )

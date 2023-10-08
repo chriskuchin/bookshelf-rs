@@ -2,6 +2,7 @@ pub mod authors;
 pub mod book_series;
 pub mod files;
 
+use crate::controllers::series::get_routes as series_routes;
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -28,6 +29,7 @@ pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
         .route("/:id", get(get_book).put(update_book).delete(delete_book))
         .nest("/:id/files", file_routes())
         .nest("/authors", author_routes())
+        .nest("/series", series_routes())
 }
 
 async fn get_book(
@@ -79,6 +81,7 @@ struct BooksFiltersAndOptions {
     sort: Option<String>,
     title: Option<String>,
     author: Option<String>,
+    series: Option<String>,
     // format: Option<String>,
 }
 
@@ -101,6 +104,10 @@ async fn get_books(
         filters.insert(String::from("title"), paging.0.title.unwrap());
     }
 
+    if paging.0.series.is_some() {
+        filters.insert(String::from("series"), paging.0.series.unwrap());
+    }
+
     // if paging.0.format.is_some() {
     //     filters.insert(Strings::from("format"), paging.0.format.unwrap());
     // }
@@ -117,10 +124,10 @@ async fn get_books(
 }
 
 async fn create_book(
-    State((pool, _, _settings)): State<(SqlitePool, Client, AppConfig)>,
+    State(state): State<AppState>,
     extract::Json(payload): extract::Json<Book>,
 ) -> Result<Json<i64>, StatusCode> {
-    let result = insert_book(&pool, payload).await;
+    let result = insert_book(&state.db_pool, payload).await;
     match result {
         Ok(val) => Ok(Json(val)),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),

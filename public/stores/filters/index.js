@@ -21,9 +21,14 @@ export const useFiltersStore = defineStore("filters", {
         filters.append("title", state.title)
       }
 
+      if (state.series != "") {
+        filters.append("series", state.series)
+      }
+
       return filters.toString()
     },
-    isSelectedAuthor: (state) => (author) => author == state.author
+    isSelectedAuthor: (state) => (author) => author == state.author,
+    isSelectedSeries: (state) => (series) => series == state.series,
   },
   actions: {
     setAuthorFilter(author) {
