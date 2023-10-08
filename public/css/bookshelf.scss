@@ -1,6 +1,11 @@
 @charset "utf-8";
 @import "~bulma/bulma";
 
+.dropdown-content {
+  max-height: 13em;
+  overflow: auto;
+}
+
 .box .title {
   display: block;
   white-space: nowrap;
