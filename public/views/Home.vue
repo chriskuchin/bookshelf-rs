@@ -107,6 +107,7 @@ export default {
       },
       size: 10,
       page: 0,
+      more: true,
       createModalActive: false,
     }
   },
@@ -121,6 +122,9 @@ export default {
       }
     },
     async listBooks(page, size) {
+      if (!this.more)
+        return
+
       let url = `/api/v1/books?limit=${size}&offset=${size * page}&sort=${this.sort.key}`
 
       url += `&${this.getFilters()}`
@@ -131,6 +135,8 @@ export default {
       books.forEach(book => {
         this.books.push(book)
       })
+
+      this.more = this.limit == books.length
     },
     async submitCreateBookModal(book, files) {
       let id = await this.createBook(book)
@@ -141,7 +147,6 @@ export default {
       this.createModalActive = !this.createModalActive
     },
     async submitUploadModal(id, files) {
-      console.log(id, files)
       this.uploadBookFiles(id, files)
       this.toggleUploadModal()
       this.uploadModal.id = ""
@@ -150,7 +155,6 @@ export default {
       this.uploadModal.active = !this.uploadModal.active
     },
     openUploadModal: function (bookID) {
-      console.log(bookID)
       this.uploadModal.id = bookID
       this.uploadModal.active = true
     }
