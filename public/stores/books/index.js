@@ -31,7 +31,7 @@ export const useBooksStore = defineStore("books", {
         return;
       }
 
-      let url = `/api/v1/books/${id}/files/`
+      let url = `/api/v1/books/${id}/files`
       const formData = new FormData();
       Object.keys(files).forEach(k => {
         formData.append(k, files[k], files[k].name)

@@ -1,10 +1,13 @@
 use crate::controllers::get_routes;
 use aws_sdk_s3::config::{Credentials, Region};
 use aws_sdk_s3::{Client, Config as StorageConfig};
+use axum::ServiceExt;
 use clap::Parser;
 use serde::Deserialize;
 use sqlx::sqlite::SqlitePool;
 use std::net::SocketAddr;
+use tower::layer::Layer;
+use tower_http::normalize_path::NormalizePathLayer;
 
 pub mod controllers;
 pub mod models;
@@ -35,6 +38,9 @@ pub struct AppConfig {
 
     #[arg(long, default_value = "dist", env = "BOOKSHELF_FRONTEND_LOCATION")]
     frontend_location: String,
+
+    #[arg(long, default_value_t = false, env = "BOOKSHELF_DEBUG")]
+    debug: bool,
 }
 
 #[tokio::main]
@@ -54,7 +60,19 @@ async fn main() {
         "bookshelf",
     );
 
-    tracing_subscriber::fmt().with_target(false).json().init();
+    if settings.debug {
+        tracing_subscriber::fmt()
+        .with_target(false)
+        .pretty()
+        .compact()
+        .init();
+    } else {
+        tracing_subscriber::fmt()
+        .with_target(false)
+        .json()
+        .init();
+
+    }
 
     let storage_config = StorageConfig::builder()
         .region(Region::new(settings.aws_s3_region.clone()))
@@ -69,9 +87,12 @@ async fn main() {
     sqlx::migrate!().run(&pool).await.unwrap();
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    // println!("listening on {}", addr);
     axum::Server::bind(&addr)
-        .serve(get_routes(pool, storage_client, settings).into_make_service())
+        .serve(
+            NormalizePathLayer::trim_trailing_slash()
+                .layer(get_routes(pool, storage_client, settings))
+                .into_make_service(),
+        )
         .await
         .unwrap();
 }
