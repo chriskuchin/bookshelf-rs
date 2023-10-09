@@ -14,6 +14,7 @@
                 <icon icon="fa-solid fa-upload"></icon>
                 Upload Files
               </a>
+              <a class="dropdown-item" href="#">{{ book.id }}</a>
             </div>
           </div>
         </div>
