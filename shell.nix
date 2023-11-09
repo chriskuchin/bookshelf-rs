@@ -12,6 +12,7 @@ pkgs.mkShell {
     tig
     nomad
     sqlite
+    cargo-edit
   ];
 
   # Certain Rust tools won't work without this
