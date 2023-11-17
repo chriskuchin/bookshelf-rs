@@ -3,7 +3,7 @@ ADD . /public
 WORKDIR /public
 RUN npm install && npx webpack
 
-FROM rust:1.72-bullseye as builder
+FROM rust:1.74-bullseye as builder
 WORKDIR /usr/src/bookshelf-rs
 
 RUN apt-get update && apt-get install -y build-essential libssl-dev pkg-config
