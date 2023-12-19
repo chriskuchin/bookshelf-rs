@@ -1,4 +1,4 @@
-check:
+check-fix:
   biome check --apply ./public
 
 fmt:
@@ -7,5 +7,8 @@ fmt:
 lint:
   biome lint ./public
 
-fix:
-  biome check --apply ./public
+lint-fix:
+  biome lint --apply ./public
+
+run:
+  cargo run
