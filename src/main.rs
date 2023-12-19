@@ -2,13 +2,9 @@ use crate::controllers::get_routes;
 use aws_sdk_s3::config::{Credentials, Region};
 use aws_sdk_s3::{Client, Config as StorageConfig};
 use axum::extract::FromRef;
-use axum::ServiceExt;
 use clap::Parser;
 use serde::Deserialize;
 use sqlx::sqlite::SqlitePool;
-use std::net::SocketAddr;
-use tower::layer::Layer;
-use tower_http::normalize_path::NormalizePathLayer;
 
 pub mod controllers;
 pub mod models;
@@ -91,15 +87,11 @@ async fn main() {
 
     sqlx::migrate!().run(&pool).await.unwrap();
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    axum::Server::bind(&addr)
-        .serve(
-            NormalizePathLayer::trim_trailing_slash()
-                .layer(get_routes(pool, storage_client, settings))
-                .into_make_service(),
-        )
+    let app = get_routes(pool, storage_client, settings);
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
         .await
         .unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 impl FromRef<(SqlitePool, Client, AppConfig)> for AppState {

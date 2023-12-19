@@ -9,7 +9,7 @@ use crate::{
 };
 use aws_sdk_s3::{primitives::ByteStream, Client};
 use axum::{
-    body::Full,
+    body::Body,
     extract::{Multipart, Path, State},
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -53,7 +53,7 @@ pub async fn get_file(
 
                 return (
                     headers,
-                    Full::from(file.body.collect().await.unwrap().to_vec()),
+                    Body::from(file.body.collect().await.unwrap().to_vec()),
                 )
                     .into_response();
             }
