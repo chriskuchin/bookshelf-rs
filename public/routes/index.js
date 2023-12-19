@@ -1,16 +1,16 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
 
-import HomePage from '../views/Home.vue'
-import ReadPage from '../views/Read.vue'
+import HomePage from "../views/Home.vue";
+import ReadPage from "../views/Read.vue";
 
 const routes = [
-    { path: "/", component: HomePage },
-    { path: "/read", component: ReadPage },
-]
+	{ path: "/", component: HomePage },
+	{ path: "/read", component: ReadPage },
+];
 
 const router = createRouter({
-    history: createWebHistory(),
-    routes
-})
+	history: createWebHistory(),
+	routes,
+});
 
-export default router
+export default router;
