@@ -15,6 +15,12 @@
                 Upload Files
               </a>
               <a class="dropdown-item" href="#">{{ book.id }}</a>
+              <hr class="dropdown-divider" />
+              <a class="dropdown-item" @click="deleteBook(book.id)">Delete Book</a>
+              <hr class="dropdown-divider" />
+              <a v-for="file in book.files" class="dropdown-item" @click="deleteFile(book.id, file.type)">
+                Delete {{ file.type }}
+              </a>
             </div>
           </div>
         </div>
@@ -51,7 +57,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -115,6 +120,12 @@ export default {
   methods: {
     ...mapState(useFiltersStore, ['getFilters']),
     ...mapActions(useBooksStore, ['createBook', 'uploadBookFiles']),
+    deleteBook: function (bookId) {
+
+    },
+    deleteFile: function (bookId, fileType) {
+
+    },
     handleIntersection: function (entries) {
       if (entries[0].isIntersecting && this.books.length % this.size == 0) {
         this.listBooks(this.page, this.size)

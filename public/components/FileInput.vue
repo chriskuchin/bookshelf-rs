@@ -4,7 +4,7 @@
     <div class="control">
       <div class="file has-name is-fullwidth">
         <label class="file-label">
-          <input class="file-input" type="file" name="resume" v-on:change="fileSelected">
+          <input class="file-input" type="file" name="resume" multiple="multiple" v-on:change="fileSelected">
           <span class="file-cta">
             <span class="file-icon">
               <i class="fas fa-upload"></i>
@@ -37,19 +37,23 @@ export default {
       preview: [],
     }
   },
+  unmounted: function () {
+    this.preview = []
+  },
   methods: {
     fileSelected: function (e) {
-      let file = e.target.files[0]
+      console.log(e.target.files)
+      for (let file of e.target.files) {
+        this.files[this.getFileKeyFromName(file.name)] = file
+        this.$emit("file", this.files)
 
-      this.files[this.getFileKeyFromName(file.name)] = file
-      this.$emit("file", this.files)
-
-      this.preview = []
-      Object.values(this.files).forEach(val => {
-        this.preview.push({
-          name: val.name
-        })
-      })
+        this.preview = []
+        for (let val of Object.values(this.files)) {
+          this.preview.push({
+            name: val.name
+          })
+        }
+      }
     },
     getFileKeyFromName: function (name) {
       return name.substring(name.indexOf(".") + 1)
