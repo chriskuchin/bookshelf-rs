@@ -16,9 +16,9 @@
               </a>
               <a class="dropdown-item" href="#">{{ book.id }}</a>
               <hr class="dropdown-divider" />
-              <a class="dropdown-item" @click="deleteBook(book.id)">Delete Book</a>
-              <hr class="dropdown-divider" />
-              <a v-for="file in book.files" class="dropdown-item" @click="deleteFile(book.id, file.type)">
+              <a class="dropdown-item" @click="deleteBookClick(book.id)">Delete Book</a>
+              <hr v-if="book.files.length > 0" class="dropdown-divider" />
+              <a v-for="file in book.files" class="dropdown-item" @click="deleteFileClick(book.id, file.type)">
                 Delete {{ file.type }}
               </a>
             </div>
@@ -67,6 +67,7 @@ import FileList from '../components/FileList.vue'
 import { mapActions, mapState } from 'pinia';
 import { useBooksStore } from '../stores/books';
 import { useFiltersStore } from '../stores/filters';
+import { useFilesStore } from '../stores/files';
 
 export default {
   components: {
@@ -88,8 +89,8 @@ export default {
     var that = this
     filterStore.$subscribe((mut, state) => {
       that.page = 0
-      that.books = []
-      that.listBooks(that.page, that.size)
+      // that.books = []
+      that.getBooks(that.page, that.size, that.sort.key)
     })
   },
   data: function () {
@@ -98,7 +99,6 @@ export default {
         active: false,
         id: "",
       },
-      books: [],
       sort: {
         key: "title",
         options: [
@@ -106,46 +106,33 @@ export default {
           "author"
         ]
       },
-      filter: {
-        author: "",
-        series: "",
-        title: "",
-      },
       size: 10,
       page: 0,
       createModalActive: false,
     }
   },
-  computed: {},
+  computed: {
+    ...mapState(useBooksStore, ['books']),
+  },
   methods: {
-    ...mapState(useFiltersStore, ['getFilters']),
-    ...mapActions(useBooksStore, ['createBook', 'uploadBookFiles']),
-    deleteBook: function (bookId) {
-
+    ...mapActions(useBooksStore, ['getBooks', 'createBook', 'uploadBookFiles', 'deleteBook']),
+    ...mapActions(useFilesStore, ['deleteFile']),
+    deleteBookClick: function (bookId) {
+      // if (confirm(`Are you sure you want to delete boook ${bookId}?`)) {
+      this.deleteBook(bookId)
+      // }
     },
-    deleteFile: function (bookId, fileType) {
-
+    deleteFileClick: function (bookId, fileType) {
+      // if (confirm(`Are you you want to delete book ${bookId} file ${fileType}?`)) {
+      this.deleteFile(bookId, fileType)
+      // }
     },
     handleIntersection: function (entries) {
+      console.log('intersection', this.books)
       if (entries[0].isIntersecting && this.books.length % this.size == 0) {
-        this.listBooks(this.page, this.size)
+        this.getBooks(this.page, this.size, this.sort.key)
         this.page++
       }
-    },
-    async listBooks(page, size) {
-      let url = `/api/v1/books?limit=${size}&offset=${size * page}&sort=${this.sort.key}`
-
-      let filters = this.getFilters()
-      if (filters != "")
-        url += `&${filters}`
-
-
-      let res = await fetch(url)
-      let books = await res.json()
-
-      books.forEach(book => {
-        this.books.push(book)
-      })
     },
     async submitCreateBookModal(book, files) {
       let id = await this.createBook(book)

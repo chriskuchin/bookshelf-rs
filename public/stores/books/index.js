@@ -1,11 +1,37 @@
 import { defineStore } from "pinia";
+import { useFiltersStore } from "../filters";
 
 export const useBooksStore = defineStore("books", {
-	state: () => {
-		return {};
-	},
+	state: () => ({
+		books: [],
+	}),
 	actions: {
-		createBook: async (book) => {
+		async getBooks(page, size, sort) {
+			let url = `/api/v1/books?limit=${size}&offset=${
+				size * page
+			}&sort=${sort}`;
+
+			const filters = useFiltersStore();
+			if (filters.urlFilters !== "") url += `&${filters.urlFilters}`;
+
+			const books = await (await fetch(url)).json();
+
+			if (page === 0) {
+				this.books = [];
+			}
+
+			for (const book of books) {
+				this.books.push(book);
+			}
+		},
+		async deleteBook(bookId) {
+			const url = `/api/v1/books/${bookId}`;
+
+			const res = await fetch(url, {
+				method: "DELETE",
+			});
+		},
+		async createBook(book) {
 			const url = "/api/v1/books";
 
 			const res = await fetch(url, {
@@ -22,7 +48,7 @@ export const useBooksStore = defineStore("books", {
 
 			return await res.json();
 		},
-		uploadBookFiles: async (id, files) => {
+		async uploadBookFiles(id, files) {
 			if (files.length === 0) {
 				// No files selected
 				return;

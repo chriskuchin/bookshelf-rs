@@ -9,7 +9,7 @@ export const useFiltersStore = defineStore("filters", {
 		};
 	},
 	getters: {
-		getFilters: (state) => {
+		urlFilters: (state) => {
 			const filters = new URLSearchParams();
 
 			if (state.author !== "") {
