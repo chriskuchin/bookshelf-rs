@@ -1,8 +1,11 @@
 <template>
   <div class="section" style="padding-top: 15px;">
     <h1 class="title">Series</h1>
+
     <div v-for="s in series" :id="s[0]">
-      <a>{{ s[1] }}</a>
+      <router-link :to="`/?series=${s[1]}`">
+        {{ s[1] }}
+      </router-link>
     </div>
   </div>
 </template>

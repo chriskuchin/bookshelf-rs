@@ -2,7 +2,7 @@
   <div class="section" style="padding-top: 15px;">
     <h1 class="title">Authors</h1>
     <div v-for="author in authors" :id="author[0]">
-      <router-link :to="`/?author=${author[0]}`">Go to Home
+      <router-link :to="`/?author=${author[0]}`">
         {{ author[0] }} ({{ author[1] }})
       </router-link>
     </div>
