@@ -4,8 +4,24 @@ import { useFiltersStore } from "../filters";
 export const useBooksStore = defineStore("books", {
 	state: () => ({
 		books: [],
+		authors: [],
+		series: [],
 	}),
 	actions: {
+		async getAuthors() {
+			const url = "/api/v1/books/authors";
+
+			const res = await fetch(url);
+			this.authors = await res.json();
+		},
+		async getSeries() {
+			const url = "/api/v1/books/series";
+			const res = await fetch(url);
+
+			if (res.ok) {
+				this.series = await res.json();
+			}
+		},
 		async getBooks(page, size, sort) {
 			let url = `/api/v1/books?limit=${size}&offset=${
 				size * page

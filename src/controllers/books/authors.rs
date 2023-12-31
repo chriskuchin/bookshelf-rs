@@ -9,6 +9,6 @@ pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
     Router::new().route("/", get(list_authors))
 }
 
-async fn list_authors(State(state): State<AppState>) -> Json<Vec<String>> {
+async fn list_authors(State(state): State<AppState>) -> Json<Vec<(String, i8)>> {
     Json(retrieve_authors(&state.db_pool).await)
 }

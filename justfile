@@ -10,8 +10,8 @@ lint:
 lint-fix:
   biome lint --apply ./public
 
-pkg-js:
-  npx webpack
+pkg:
+  npx webpack --mode=development
 
 run:
   cargo run

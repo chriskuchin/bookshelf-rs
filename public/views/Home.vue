@@ -2,9 +2,9 @@
   <div class="section" style="padding-top: 15px;">
     <div class="box" v-for="book in books" :key="book.uuid">
       <div class="has-text-right">
-        <div class="dropdown is-hoverable is-right">
+        <div class="dropdown is-right" @click="clickMenu">
           <div class="dropdown-trigger">
-            <span class="icon is-clickable" aria-haspopup="true" aria-controls="dropdown-menu">
+            <span class="icon" aria-haspopup="true" aria-controls="dropdown-menu">
               <icon icon="fa-solid fa-ellipsis-v"></icon>
             </span>
           </div>
@@ -75,6 +75,15 @@ export default {
     "uff": UploadFileForm,
     "fl": FileList,
   },
+  created: function () {
+    this.$watch(
+      () => this.$route.params,
+      (toParams, previousParams) => {
+        // react to route changes...
+        console.log(toParams, previousParams)
+      }
+    )
+  },
   mounted: function () {
     const options = {
       root: null,
@@ -84,14 +93,22 @@ export default {
 
     const observer = new IntersectionObserver(this.handleIntersection, options);
     observer.observe(this.$refs.sentinel);
-
     const filterStore = useFiltersStore()
     var that = this
     filterStore.$subscribe((mut, state) => {
       that.page = 0
-      // that.books = []
       that.getBooks(that.page, that.size, that.sort.key)
     })
+
+    if (this.$route.query["author"]) {
+      filterStore.setAuthorFilter(this.$route.query["author"])
+    }
+
+    if (this.$route.query["series"]) {
+      filterStore.setSeriesFilter(this.$route.query["series"])
+    }
+
+
   },
   data: function () {
     return {
@@ -117,6 +134,15 @@ export default {
   methods: {
     ...mapActions(useBooksStore, ['getBooks', 'createBook', 'uploadBookFiles', 'deleteBook']),
     ...mapActions(useFilesStore, ['deleteFile']),
+    clickMenu: function (e) {
+      let target = e.currentTarget
+      if (target.className.includes("is-active")) {
+        target.className = target.className.replace("is-active", "")
+      }
+      else {
+        target.className = e.currentTarget.className + " is-active"
+      }
+    },
     deleteBookClick: function (bookId) {
       // if (confirm(`Are you sure you want to delete boook ${bookId}?`)) {
       this.deleteBook(bookId)
@@ -128,7 +154,6 @@ export default {
       // }
     },
     handleIntersection: function (entries) {
-      console.log('intersection', this.books)
       if (entries[0].isIntersecting && this.books.length % this.size == 0) {
         this.getBooks(this.page, this.size, this.sort.key)
         this.page++
