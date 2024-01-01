@@ -25,23 +25,21 @@
             Series
           </router-link>
 
-        </div>
-      </div>
-      <div class="navbar-end">
-
-        <div class="navbar-item">
-          <div class="field has-addons">
-            <div class="control">
-              <input class="input is-small" type="text" placeholder="Title Search" v-model="inputs.title"
-                @keypress.enter="searchTitles">
-            </div>
-            <div class="control">
-              <a class="button is-info is-small" @click="searchTitles">
-                Search
-              </a>
+          <div class="navbar-item">
+            <div class="field has-addons">
+              <div class="control">
+                <input class="input is-small" type="text" placeholder="Title Search" v-model="inputs.title"
+                  @keypress.enter="searchTitles">
+              </div>
+              <div class="control">
+                <a class="button is-info is-small" @click="searchTitles">
+                  Search
+                </a>
+              </div>
             </div>
           </div>
-
+        </div>
+        <div class="navbar-end">
           <router-link class="navbar-item" to="/">
             <span class="iconify" data-icon="mdi-rss" height="28"></span>
           </router-link>
