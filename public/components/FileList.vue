@@ -47,9 +47,6 @@ export default {
           return mime
       }
     },
-    getDownloadLink: function (bookID, file) {
-      return "/api/v1/books/" + bookID + "/files/" + this.getTagNameFromType(file.type)
-    }
   }
 }
 </script>

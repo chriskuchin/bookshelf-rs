@@ -17,19 +17,23 @@
 import FileInput from './FileInput.vue';
 
 export default {
-  emits: ['cancel', 'submit', 'files'],
+  emits: ['cancel', 'submit'],
   props: ['bookID'],
   components: {
     'fi': FileInput,
   },
   data: function () {
     return {
-      files: {},
+      files: [],
     }
   },
   methods: {
     fileSelected: function (files) {
-      this.files = files
+      console.log(files)
+      console.log(files)
+      for (const file of files) {
+        this.files.push(file)
+      }
     },
     submit: function () {
       this.$emit('submit', this.bookID, this.files)
@@ -40,7 +44,7 @@ export default {
       this.clear()
     },
     clear: function () {
-      this.files = {}
+      this.files = []
     }
   },
   computed: {

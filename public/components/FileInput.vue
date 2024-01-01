@@ -33,27 +33,20 @@ export default {
     'ft': FileTag,
   },
   data: function () {
-    return {
-      preview: [],
-    }
+    return {}
   },
-  unmounted: function () {
-    this.preview = []
-  },
+  unmounted: function () { },
   methods: {
     fileSelected: function (e) {
-      console.log(e.target.files)
+      let files = []
       for (let file of e.target.files) {
-        this.files[this.getFileKeyFromName(file.name)] = file
-        this.$emit("file", this.files)
-
-        this.preview = []
-        for (let val of Object.values(this.files)) {
-          this.preview.push({
-            name: val.name
-          })
-        }
+        files.push({
+          ext: this.getFileKeyFromName(file.name),
+          file: file
+        })
       }
+
+      this.$emit("file", files)
     },
     getFileKeyFromName: function (name) {
       return name.substring(name.indexOf(".") + 1)
@@ -78,13 +71,16 @@ export default {
     },
   },
   computed: {
-    previewFiles: function () {
-      Object.values(this.files).forEach(val => {
-        this.preview.push({
-          name: val.name
+    preview() {
+      let preview = []
+      for (let val of this.files) {
+        preview.push({
+          name: val.file.name
         })
-      })
-    }
+      }
+
+      return preview
+    },
   }
 };
 </script>

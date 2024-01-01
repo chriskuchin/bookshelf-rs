@@ -163,6 +163,9 @@ export default {
       let id = await this.createBook(book)
       this.uploadBookFiles(id, files)
       this.toggleCreateModal()
+
+      this.page = 0
+      this.getBooks(this.page, this.size, this.sort.key)
     },
     toggleCreateModal: function () {
       this.createModalActive = !this.createModalActive

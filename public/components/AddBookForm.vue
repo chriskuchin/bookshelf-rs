@@ -54,12 +54,14 @@ export default {
         pub_date: "",
         series: "",
       },
-      files: {},
+      files: [],
     }
   },
   methods: {
     fileSelected: function (files) {
-      this.files = files
+      for (const file of files) {
+        this.files.push(file)
+      }
     },
     getFileKeyFromName: function (name) {
       return name.substring(name.indexOf(".") + 1)
@@ -94,17 +96,9 @@ export default {
       this.book.title = ""
       this.book.author = ""
       this.book.series = ""
-      this.files = {}
+      this.files = []
     }
   },
-  computed: {
-    previewFiles: function () {
-      Object.values(this.files).forEach(val => {
-        this.preview.push({
-          name: val.name
-        })
-      })
-    }
-  }
+  computed: {}
 };
 </script>

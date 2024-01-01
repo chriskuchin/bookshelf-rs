@@ -23,9 +23,8 @@ export const useBooksStore = defineStore("books", {
 			}
 		},
 		async getBooks(page, size, sort) {
-			let url = `/api/v1/books?limit=${size}&offset=${
-				size * page
-			}&sort=${sort}`;
+			let url = `/api/v1/books?limit=${size}&offset=${size * page
+				}&sort=${sort}`;
 
 			const filters = useFiltersStore();
 			if (filters.urlFilters !== "") url += `&${filters.urlFilters}`;
@@ -73,8 +72,8 @@ export const useBooksStore = defineStore("books", {
 			const url = `/api/v1/books/${id}/files`;
 			const formData = new FormData();
 
-			for (const k of Object.keys(files)) {
-				formData.append(k, files[k], files[k].name);
+			for (const file of files) {
+				formData.append(file.ext, file.file, file.file.name);
 			}
 
 			// Make a POST request to the server with the FormData object
