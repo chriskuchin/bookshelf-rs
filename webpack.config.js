@@ -13,9 +13,12 @@ module.exports = (env, argv) => {
 
 	const config = {
 		entry: {
-			results: {
+			bookshelf: {
 				import: "./public/bookshelf.js",
 			},
+			read: {
+				import: "./public/read.js",
+			}
 		},
 		mode: mode,
 		output: {
@@ -106,6 +109,20 @@ module.exports = (env, argv) => {
 				templateParameters: {
 					mode: mode,
 				},
+				chunks: ['bookshelf']
+			}),
+			new HtmlWebpackPlugin({
+				title: "reader",
+				filename: "read/index.html",
+				template: "public/read.ejs",
+				// favicon: 'public/assets/images/favicon.ico',
+				meta: {
+					viewport: "initial-scale=1, maximum-scale=1",
+				},
+				templateParameters: {
+					mode: mode,
+				},
+				chunks: ['read']
 			}),
 			new MiniCssExtractPlugin({
 				filename: "[name].[contenthash].css",
