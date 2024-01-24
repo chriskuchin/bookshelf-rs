@@ -84,6 +84,29 @@ fn row_to_book(row: SqliteRow) -> Book {
     }
 }
 
+const COUNT_BOOKS_QUERY: &str = "SELECT COUNT(1) FROM books";
+const _COUNT_AUTHORS_QUERY: &str = "SELECT COUNT(DISTINCT author) FROM books";
+const _COUNT_FILES_QUERY: &str = "SELECT COUNT(1) FROM files";
+const _COUNT_FILE_TYPE_QUERY: &str = "SELECT mime_type, count(1) FROM files GROUP BY mime_type LIMIT 10";
+const COUNT_AUTHOR_BOOKS_QUERY: &str = "SELECT author, count(1) FROM books GROUP BY author order by count(1) desc LIMIT 10";
+pub async fn get_bookshelf_stats(pool: &SqlitePool) {
+    let mut rows = sqlx::query(COUNT_BOOKS_QUERY).fetch(pool);
+
+    while let Some(row) = rows.try_next().await.unwrap() {
+        let book_count: i32 = row.try_get("COUNT(1)").unwrap_or(0);
+        println!("bookCount: {}", book_count);
+    }
+
+    let mut rows = sqlx::query(COUNT_AUTHOR_BOOKS_QUERY).fetch(pool);
+    while let Some(row) = rows.try_next().await.unwrap() {
+        let author: &str = row.try_get("author").unwrap_or("unknown");
+        let count: i32 = row.try_get("count(1)").unwrap_or(0);
+
+        println!("{} {}", author, count);
+    }
+}
+
+
 const GET_BOOK_BY_ID_QUERY: &str = "SELECT * FROM books WHERE id = ?";
 pub async fn get_book_by_id(pool: &SqlitePool, id: &String) -> Option<Book> {
     let mut rows = sqlx::query(GET_BOOK_BY_ID_QUERY)

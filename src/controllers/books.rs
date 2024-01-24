@@ -10,7 +10,7 @@ use super::AppConfig;
 use crate::{
     controllers::books::{authors::get_routes as author_routes, files::get_routes as file_routes},
     models::books::{
-        delete_book_by_id, get_book_by_id, insert_book, list_books, update_book_by_id, Book,
+        delete_book_by_id, get_book_by_id, insert_book, list_books, update_book_by_id, get_bookshelf_stats, Book,
     },
     AppState,
 };
@@ -26,10 +26,16 @@ use sqlx::SqlitePool;
 pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
     Router::new()
         .route("/", get(get_books).post(create_book))
+        .route("/info", get(get_bookshelf_info))
         .route("/:id", get(get_book).put(update_book).delete(delete_book))
         .nest("/:id/files", file_routes())
         .nest("/authors", author_routes())
         .nest("/series", series_routes())
+}
+
+async fn get_bookshelf_info(State(state): State<AppState>) -> Result<Json<Book>, StatusCode> {
+    get_bookshelf_stats(&state.db_pool).await;
+    Err(StatusCode::NOT_IMPLEMENTED)
 }
 
 async fn get_book(
