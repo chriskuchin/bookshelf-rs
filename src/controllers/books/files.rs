@@ -99,11 +99,11 @@ pub async fn batch_file_upload(
 ) -> Response {
     match get_book_by_id(&state.db_pool, &book_id).await {
         Some(book) => {
-            while let Some(field) = multipart.next_field().await.unwrap() {
+            while let Some(mut field) = multipart.next_field().await.unwrap() {
                 let file_name = field.file_name().unwrap_or("unknown_file").to_string();
                 let ext = field.name().unwrap_or("unknown_name").to_string();
-                let data = field.bytes().await.unwrap();
-                // println!("{} {} {}", file_name, name, data.len());
+                // let data = field.bytes().await.unwrap();
+                // // println!("{} {} {}", file_name, name, data.len());
                 println!("{}, {}", ext, file_name);
 
                 let key = format!("{}/{}/{}", book.clone().uuid, ext.clone(), Uuid::new_v4());
@@ -115,22 +115,70 @@ pub async fn batch_file_upload(
                 }
 
                 if insert_file(&state.db_pool, &book_id, &ext, &key).await {
-                    match state
+                    let res = state
                         .storage_client
-                        .put_object()
+                        .create_multipart_upload()
                         .bucket(state.settings.storage_url.as_str())
-                        .body(ByteStream::from(data))
                         .key(key.as_str())
                         .set_content_type(ext_to_mime(&ext))
                         .send()
                         .await
+                        .unwrap();
+
+                    let upload_id = res.upload_id.unwrap();
+                    let mut part_num = 1;
+                    while let Some(chunk) = field
+                        .chunk()
+                        .await
+                        .map_err(|err| {
+                            println!("{}", err);
+                            StatusCode::BAD_REQUEST
+                        })
+                        .unwrap()
                     {
-                        Ok(_) => continue,
-                        Err(err) => {
-                            println!("Failed to upload, {}", err);
-                            return (StatusCode::BAD_REQUEST).into_response();
-                        }
+                        println!("chunk of bytes {}", chunk.len());
+
+                        state
+                            .storage_client
+                            .upload_part()
+                            .part_number(part_num)
+                            .bucket(state.settings.storage_url.as_str())
+                            .body(ByteStream::from(chunk))
+                            .key(key.as_str())
+                            .upload_id(upload_id.clone())
+                            .send()
+                            .await
+                            .unwrap();
+
+                        part_num += 1;
                     }
+
+                    state
+                        .storage_client
+                        .complete_multipart_upload()
+                        .bucket(state.settings.storage_url.as_str())
+                        .key(key.as_str())
+                        .upload_id(upload_id.clone())
+                        .send()
+                        .await
+                        .unwrap();
+
+                    // match state
+                    //     .storage_client
+                    //     .put_object()
+                    //     .bucket(state.settings.storage_url.as_str())
+                    //     .body(ByteStream::from(data))
+                    //     .key(key.as_str())
+                    //     .set_content_type(ext_to_mime(&ext))
+                    //     .send()
+                    //     .await
+                    // {
+                    //     Ok(_) => continue,
+                    //     Err(err) => {
+                    //         println!("Failed to upload, {}", err);
+                    //         return (StatusCode::BAD_REQUEST).into_response();
+                    //     }
+                    // }
                 }
             }
             return (StatusCode::OK).into_response();

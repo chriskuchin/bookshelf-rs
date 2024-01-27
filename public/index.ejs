@@ -4,10 +4,9 @@
 <head>
   <meta charset="utf-8">
   <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" href="https://zany.sh/favicon.svg?emoji=📚"/>
-  <title><%= htmlWebpackPlugin.options.title %></title>
-  <% if (mode=='development' ){ print('<script src="//cdn.jsdelivr.net/npm/eruda"></script>')} %>
-  <% if (mode=='development' ){ print('<script>eruda.init();</script>')} %>
+  <title>
+    <%= htmlWebpackPlugin.options.title %>
+  </title>
   <script src="//code.iconify.design/1/1.0.6/iconify.min.js"></script>
 </head>
 

@@ -10,7 +10,8 @@ use super::AppConfig;
 use crate::{
     controllers::books::{authors::get_routes as author_routes, files::get_routes as file_routes},
     models::books::{
-        delete_book_by_id, get_book_by_id, insert_book, list_books, update_book_by_id, get_bookshelf_stats, Book,
+        delete_book_by_id, get_book_by_id, get_bookshelf_stats, insert_book, list_books,
+        update_book_by_id, Book,
     },
     AppState,
 };
@@ -34,6 +35,25 @@ pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
 }
 
 async fn get_bookshelf_info(State(state): State<AppState>) -> Result<Json<Book>, StatusCode> {
+    let rs = state
+        .storage_client
+        .list_multipart_uploads()
+        .bucket(state.settings.storage_url.as_str())
+        .send()
+        .await
+        .unwrap();
+
+    for upload in rs.uploads() {
+        state
+            .storage_client
+            .abort_multipart_upload()
+            .bucket(state.settings.storage_url.as_str())
+            .key(upload.key().unwrap())
+            .upload_id(upload.upload_id().unwrap())
+            .send()
+            .await
+            .unwrap();
+    }
     get_bookshelf_stats(&state.db_pool).await;
     Err(StatusCode::NOT_IMPLEMENTED)
 }

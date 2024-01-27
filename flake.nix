@@ -53,6 +53,7 @@
 
           # Additional dev-shell environment variables can be set directly
           # MY_CUSTOM_DEVELOPMENT_VAR = "something else";
+          RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
 
           # Extra inputs can be added here; cargo and rustc are provided by default.
           packages = [
@@ -61,6 +62,7 @@
             pkgs.sqlite
             pkgs.nodejs_21
             pkgs.biome
+            pkgs.rust-analyzer
           ];
         };
       });

@@ -674,6 +674,7 @@ dependencies = [
  "serde",
  "sqlx",
  "tokio",
+ "tokio-util",
  "tower",
  "tower-http",
  "tracing",
