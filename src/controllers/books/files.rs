@@ -7,14 +7,17 @@ use crate::{
     },
     AppState,
 };
+use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::{primitives::ByteStream, Client};
 use axum::{
     body::Body,
     extract::{Multipart, Path, State},
+    http::HeaderMap,
     response::{IntoResponse, Response},
     routing::{get, post},
     Router,
 };
+use bytes::{BufMut, BytesMut};
 use http::{header, StatusCode};
 use sqlx::SqlitePool;
 use uuid::Uuid;
@@ -92,18 +95,29 @@ pub async fn delete_file(
     (StatusCode::BAD_REQUEST).into_response()
 }
 
+const CHUNK_SIZE: u64 = 1024 * 1024 * 32;
+
 pub async fn batch_file_upload(
     State(state): State<AppState>,
     Path(book_id): Path<String>,
+    header: HeaderMap,
     mut multipart: Multipart,
 ) -> Response {
+    let file_size: u64 = header
+        .get("Content-Length")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .parse::<u64>()
+        .unwrap();
+    println!("Content-Length: {}", file_size);
     match get_book_by_id(&state.db_pool, &book_id).await {
         Some(book) => {
-            while let Some(field) = multipart.next_field().await.unwrap() {
+            while let Some(mut field) = multipart.next_field().await.unwrap() {
                 let file_name = field.file_name().unwrap_or("unknown_file").to_string();
                 let ext = field.name().unwrap_or("unknown_name").to_string();
-                let data = field.bytes().await.unwrap();
-                // println!("{} {} {}", file_name, name, data.len());
+                // let data = field.bytes().await.unwrap();
+                // // println!("{} {} {}", file_name, name, data.len());
                 println!("{}, {}", ext, file_name);
 
                 let key = format!("{}/{}/{}", book.clone().uuid, ext.clone(), Uuid::new_v4());
@@ -115,22 +129,77 @@ pub async fn batch_file_upload(
                 }
 
                 if insert_file(&state.db_pool, &book_id, &ext, &key).await {
-                    match state
+                    let res = state
                         .storage_client
-                        .put_object()
+                        .create_multipart_upload()
                         .bucket(state.settings.storage_url.as_str())
-                        .body(ByteStream::from(data))
                         .key(key.as_str())
                         .set_content_type(ext_to_mime(&ext))
                         .send()
                         .await
+                        .unwrap();
+
+                    let upload_id = res.upload_id.unwrap();
+                    let mut chunk_index: u64 = 1;
+                    let mut upload_parts: Vec<CompletedPart> = Vec::new();
+
+                    let mut buf = BytesMut::with_capacity(CHUNK_SIZE as usize * 35);
+                    while let Some(chunk) = field
+                        .chunk()
+                        .await
+                        .map_err(|err| {
+                            println!("{}", err);
+                            StatusCode::BAD_REQUEST
+                        })
+                        .unwrap()
                     {
-                        Ok(_) => continue,
-                        Err(err) => {
-                            println!("Failed to upload, {}", err);
-                            return (StatusCode::BAD_REQUEST).into_response();
+                        buf.put(chunk);
+
+                        if buf.len() >= CHUNK_SIZE.try_into().unwrap() {
+                            let mut batch = buf.split_to(CHUNK_SIZE as usize);
+                            println!("Uploading Chunk: {} / {}", batch.len(), buf.len());
+                            upload_parts.push(
+                                upload_multipart_chunk(
+                                    &state.storage_client,
+                                    upload_id.as_str(),
+                                    ByteStream::from(bytes::Bytes::from(batch.split())),
+                                    chunk_index as i32,
+                                    state.settings.storage_url.as_str(),
+                                    key.as_str(),
+                                )
+                                .await,
+                            );
+                            chunk_index += 1;
                         }
                     }
+
+                    upload_parts.push(
+                        upload_multipart_chunk(
+                            &state.storage_client,
+                            upload_id.as_str(),
+                            ByteStream::from(bytes::Bytes::from(buf.split())),
+                            chunk_index as i32,
+                            state.settings.storage_url.as_str(),
+                            key.as_str(),
+                        )
+                        .await,
+                    );
+
+                    let completed_multipart_upload: CompletedMultipartUpload =
+                        CompletedMultipartUpload::builder()
+                            .set_parts(Some(upload_parts))
+                            .build();
+
+                    state
+                        .storage_client
+                        .complete_multipart_upload()
+                        .bucket(state.settings.storage_url.as_str())
+                        .key(key.as_str())
+                        .multipart_upload(completed_multipart_upload)
+                        .upload_id(upload_id)
+                        .send()
+                        .await
+                        .unwrap();
                 }
             }
             return (StatusCode::OK).into_response();
@@ -139,6 +208,30 @@ pub async fn batch_file_upload(
     }
 }
 
+async fn upload_multipart_chunk(
+    client: &aws_sdk_s3::Client,
+    upload_id: &str,
+    stream: ByteStream,
+    chunk_index: i32,
+    storage_url: &str,
+    key: &str,
+) -> CompletedPart {
+    let upload_part_res = client
+        .upload_part()
+        .part_number(chunk_index)
+        .bucket(storage_url)
+        .body(stream)
+        .key(key)
+        .upload_id(upload_id)
+        .send()
+        .await
+        .unwrap();
+
+    CompletedPart::builder()
+        .e_tag(upload_part_res.e_tag.unwrap_or_default())
+        .part_number(chunk_index as i32)
+        .build()
+}
 pub async fn upload_file(
     State(state): State<AppState>,
     Path((book_id, ext)): Path<(String, String)>,
