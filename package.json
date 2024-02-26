@@ -16,7 +16,7 @@
     "jszip": "^3.10.1",
     "pinia": "^2.1.7",
     "vue": "^3.4.19",
-    "vue-router": "^4.2.5",
+    "vue-router": "^4.3.0",
     "workbox-webpack-plugin": "^7.0.0"
   },
   "devDependencies": {
