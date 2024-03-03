@@ -25,7 +25,7 @@ use uuid::Uuid;
 pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
     Router::new()
         .route("/", post(batch_file_upload))
-        .route("/:ext", get(get_file).delete(delete_file).post(upload_file))
+        .route("/:ext", get(get_file).delete(delete_file))
 }
 
 pub async fn get_file(
@@ -143,7 +143,7 @@ pub async fn batch_file_upload(
                     let mut chunk_index: u64 = 1;
                     let mut upload_parts: Vec<CompletedPart> = Vec::new();
 
-                    let mut buf = BytesMut::with_capacity(CHUNK_SIZE as usize * 35);
+                    let mut buf = BytesMut::with_capacity(CHUNK_SIZE as usize * 3);
                     while let Some(chunk) = field
                         .chunk()
                         .await
@@ -231,55 +231,4 @@ async fn upload_multipart_chunk(
         .e_tag(upload_part_res.e_tag.unwrap_or_default())
         .part_number(chunk_index as i32)
         .build()
-}
-pub async fn upload_file(
-    State(state): State<AppState>,
-    Path((book_id, ext)): Path<(String, String)>,
-    mut multipart: Multipart,
-) -> Response {
-    match get_book_by_id(&state.db_pool, &book_id).await {
-        // verify book exists
-        Some(book) => {
-            // generate s3 file name... sha hash of file?
-            let key = format!("{}/{}/{}", &book.uuid, &ext, Uuid::new_v4());
-
-            if book.files.is_some() {
-                for file in book.files.unwrap() {
-                    if mime_to_ext(&file.mime_type) == ext {
-                        return (StatusCode::CONFLICT).into_response();
-                    }
-                }
-            }
-
-            if ext_to_mime(&ext).is_none() {
-                return (StatusCode::BAD_REQUEST).into_response();
-            }
-
-            if insert_file(&state.db_pool, &book_id, &ext, &key).await {
-                while let Some(field) = multipart.next_field().await.unwrap() {
-                    // let file_name = field.file_name().unwrap_or("unknown_file").to_string();
-                    // let name = field.name().unwrap_or("unknown_name").to_string();
-                    let data = field.bytes().await.unwrap();
-                    // println!("{} {} {}", file_name, name, data.len());
-
-                    match state
-                        .storage_client
-                        .put_object()
-                        .bucket(state.settings.storage_url.as_str())
-                        .body(ByteStream::from(data))
-                        .key(key.as_str())
-                        .set_content_type(ext_to_mime(&ext))
-                        .send()
-                        .await
-                    {
-                        Ok(_) => continue,
-                        Err(err) => println!("Failed to upload, {}", err),
-                    }
-                }
-            }
-        }
-        None => return (StatusCode::NOT_FOUND).into_response(),
-    }
-
-    return (StatusCode::ACCEPTED).into_response();
 }
