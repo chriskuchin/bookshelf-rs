@@ -21,4 +21,4 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 tokio-util = { version = "0.7.10", features = ["io"] }
 bytes = "1.5.0"
-object_store = {version = "0.9.0", features= ["aws"]}
+object_store = {version = "0.9.1", features= ["aws"]}
