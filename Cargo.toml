@@ -15,7 +15,7 @@ chrono = { version = "0.4", features = ["serde"] }
 futures = {version = "0.3"}
 uuid = {version = "1.7.0", features = ["v4"]}
 http = {version = "1.0"}
-aws-config = "1.1.7"
+aws-config = "1.1.8"
 aws-sdk-s3 = { version = "1.17.0", features = ["behavior-version-latest"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
