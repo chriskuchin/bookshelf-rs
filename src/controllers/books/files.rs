@@ -1,3 +1,5 @@
+use std::io::{self, Error};
+
 use super::AppConfig;
 use crate::{
     models::{
@@ -17,9 +19,11 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use bytes::{BufMut, BytesMut};
+use futures::TryStreamExt;
 use http::{header, StatusCode};
 use sqlx::SqlitePool;
+use tokio::io::{AsyncRead, AsyncReadExt};
+use tokio_util::io::StreamReader;
 use uuid::Uuid;
 
 pub fn get_routes() -> Router<(SqlitePool, Client, AppConfig)> {
@@ -95,7 +99,8 @@ pub async fn delete_file(
     (StatusCode::BAD_REQUEST).into_response()
 }
 
-const CHUNK_SIZE: u64 = 1024 * 1024 * 32;
+// const CHUNK_SIZE: u64 = 1024 * 1024 * 32;
+const CHUNK_SIZE: usize = 8_388_608 * 5; // 8 Mebibytes, min is 5 (5_242_880);
 
 pub async fn batch_file_upload(
     State(state): State<AppState>,
@@ -113,7 +118,7 @@ pub async fn batch_file_upload(
     println!("Content-Length: {}", file_size);
     match get_book_by_id(&state.db_pool, &book_id).await {
         Some(book) => {
-            while let Some(mut field) = multipart.next_field().await.unwrap() {
+            while let Some(field) = multipart.next_field().await.unwrap() {
                 let file_name = field.file_name().unwrap_or("unknown_file").to_string();
                 let ext = field.name().unwrap_or("unknown_name").to_string();
                 // let data = field.bytes().await.unwrap();
@@ -129,6 +134,26 @@ pub async fn batch_file_upload(
                 }
 
                 if insert_file(&state.db_pool, &book_id, &ext, &key).await {
+                    let body_with_io_err =
+                        field.map_err(|err| io::Error::new(io::ErrorKind::Other, err));
+
+                    let mut body_reader = StreamReader::new(body_with_io_err);
+
+                    let first_chunk = read_chunk_async(&mut body_reader).await.unwrap();
+                    if first_chunk.len() < CHUNK_SIZE {
+                        state
+                            .storage_client
+                            .put_object()
+                            .bucket(state.settings.storage_url)
+                            .key(key)
+                            .body(first_chunk.into())
+                            .set_content_type(ext_to_mime(&ext))
+                            .send()
+                            .await
+                            .unwrap();
+                        return (StatusCode::OK).into_response();
+                    }
+
                     let res = state
                         .storage_client
                         .create_multipart_upload()
@@ -140,54 +165,60 @@ pub async fn batch_file_upload(
                         .unwrap();
 
                     let upload_id = res.upload_id.unwrap();
-                    let mut chunk_index: u64 = 1;
-                    let mut upload_parts: Vec<CompletedPart> = Vec::new();
+                    let mut chunk_index: u64 = 0;
+                    let mut handles = vec![];
 
-                    let mut buf = BytesMut::with_capacity(CHUNK_SIZE as usize * 3);
-                    while let Some(chunk) = field
-                        .chunk()
-                        .await
-                        .map_err(|err| {
-                            println!("{}", err);
-                            StatusCode::BAD_REQUEST
-                        })
-                        .unwrap()
-                    {
-                        buf.put(chunk);
+                    loop {
+                        let chunk = if chunk_index == 0 {
+                            first_chunk.clone()
+                        } else {
+                            read_chunk_async(&mut body_reader).await.unwrap()
+                        };
 
-                        if buf.len() >= CHUNK_SIZE.try_into().unwrap() {
-                            let mut batch = buf.split_to(CHUNK_SIZE as usize);
-                            println!("Uploading Chunk: {} / {}", batch.len(), buf.len());
-                            upload_parts.push(
-                                upload_multipart_chunk(
-                                    &state.storage_client,
-                                    upload_id.as_str(),
-                                    ByteStream::from(bytes::Bytes::from(batch.split())),
-                                    chunk_index as i32,
-                                    state.settings.storage_url.as_str(),
-                                    key.as_str(),
-                                )
-                                .await,
-                            );
-                            chunk_index += 1;
+                        let done = chunk.len() < CHUNK_SIZE;
+                        chunk_index += 1;
+                        println!("Chunk: {}", chunk_index);
+
+                        let handle = state
+                            .storage_client
+                            .upload_part()
+                            .part_number(chunk_index as i32)
+                            .bucket(state.settings.storage_url.as_str())
+                            .body(ByteStream::from(chunk))
+                            .key(&key)
+                            .upload_id(&upload_id)
+                            .send();
+
+                        handles.push(handle);
+
+                        if done {
+                            break;
                         }
                     }
 
-                    upload_parts.push(
-                        upload_multipart_chunk(
-                            &state.storage_client,
-                            upload_id.as_str(),
-                            ByteStream::from(bytes::Bytes::from(buf.split())),
-                            chunk_index as i32,
-                            state.settings.storage_url.as_str(),
-                            key.as_str(),
-                        )
-                        .await,
-                    );
+                    let responses = futures::future::join_all(handles).await;
+
+                    let mut etags = vec![];
+                    for response in responses {
+                        let etag = response.unwrap().e_tag.unwrap();
+                        etags.push(etag);
+                    }
+
+                    let payload = etags
+                        .clone()
+                        .into_iter()
+                        .enumerate()
+                        .map(|(i, etag)| {
+                            CompletedPart::builder()
+                                .e_tag(etag)
+                                .part_number(i as i32)
+                                .build()
+                        })
+                        .collect::<Vec<CompletedPart>>();
 
                     let completed_multipart_upload: CompletedMultipartUpload =
                         CompletedMultipartUpload::builder()
-                            .set_parts(Some(upload_parts))
+                            .set_parts(Some(payload))
                             .build();
 
                     state
@@ -208,27 +239,10 @@ pub async fn batch_file_upload(
     }
 }
 
-async fn upload_multipart_chunk(
-    client: &aws_sdk_s3::Client,
-    upload_id: &str,
-    stream: ByteStream,
-    chunk_index: i32,
-    storage_url: &str,
-    key: &str,
-) -> CompletedPart {
-    let upload_part_res = client
-        .upload_part()
-        .part_number(chunk_index)
-        .bucket(storage_url)
-        .body(stream)
-        .key(key)
-        .upload_id(upload_id)
-        .send()
-        .await
-        .unwrap();
+pub async fn read_chunk_async<R: AsyncRead + Unpin>(reader: &mut R) -> Result<Vec<u8>, Error> {
+    let mut chunk = Vec::with_capacity(CHUNK_SIZE);
+    let mut take = reader.take(CHUNK_SIZE as u64);
+    take.read_to_end(&mut chunk).await.unwrap();
 
-    CompletedPart::builder()
-        .e_tag(upload_part_res.e_tag.unwrap_or_default())
-        .part_number(chunk_index as i32)
-        .build()
+    Ok(chunk)
 }
