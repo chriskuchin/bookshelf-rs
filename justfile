@@ -15,3 +15,9 @@ pkg:
 
 run:
   cargo run
+
+update:
+  kubectl rollout restart deploy/bookshelf-deployment
+
+monitor:
+  kubectl logs deployment/bookshelf-deployment -f
