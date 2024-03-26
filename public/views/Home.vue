@@ -1,6 +1,6 @@
 <template>
   <div class="section" style="padding-top: 15px;">
-    <div class="box mb-3" v-for="book in books" :key="book.uuid">
+    <div class="box mb-6" v-for="book in books" :key="book.uuid">
       <div class="has-text-right">
         <div class="dropdown is-right" @click="clickMenu">
           <div class="dropdown-trigger">
