@@ -16,15 +16,21 @@
                     {{ book.id }}. {{ book.title }}
                     <br />
                     {{ book.author }}
-                    <br />
-                    {{ book.files }}
                   </div>
                   <hr class="dropdown-divider" />
+                  <a class="dropdown-item" @click="openEditBookModal(book.id, book)">
+                    <icon icon="fa-solid fa-pencil"></icon>
+                    Edit Book
+                  </a>
                   <a class="dropdown-item" @click="openUploadModal(book.id)">
                     <icon icon="fa-solid fa-upload"></icon>
                     Upload Files
                   </a>
-                  <a class="dropdown-item" @click="openEditBookModal(book.id, book)">Edit Book</a>
+                  <hr class="dropdown-divider" v-if="book.files.length > 0" />
+                  <a class="dropdown-item" :href="getDownloadLink(book.id, file.type)" v-for="file in book.files">
+                    <icon icon="fa-solid fa-download"></icon>
+                    {{ file.type }}
+                  </a>
                   <hr class="dropdown-divider" />
                   <a class="dropdown-item" @click="deleteBookClick(book.id)">Delete Book</a>
                   <hr v-if="book.files.length > 0" class="dropdown-divider" />
@@ -143,6 +149,9 @@ export default {
     ...mapActions(useBooksStore, ['getBooks', 'createBook', 'uploadBookFiles', 'deleteBook']),
     ...mapActions(useFilesStore, ['deleteFile']),
     getCoverURL,
+    getDownloadLink: function (bookId, fileType) {
+      return `/api/v1/books/${bookId}/files/${fileType}`
+    },
     getBooksInfo: function (author, title) {
       searchLibrary(author, title).then((info) => {
         const book = info['docs'][0]
@@ -159,14 +168,14 @@ export default {
       }
     },
     deleteBookClick: function (bookId) {
-      // if (confirm(`Are you sure you want to delete boook ${bookId}?`)) {
-      this.deleteBook(bookId)
-      // }
+      if (confirm(`Are you sure you want to delete boook ${bookId}?`)) {
+        this.deleteBook(bookId)
+      }
     },
     deleteFileClick: function (bookId, fileType) {
-      // if (confirm(`Are you you want to delete book ${bookId} file ${fileType}?`)) {
-      this.deleteFile(bookId, fileType)
-      // }
+      if (confirm(`Are you you want to delete book ${bookId} file ${fileType}?`)) {
+        this.deleteFile(bookId, fileType)
+      }
     },
     handleIntersection: function (entries) {
       if (entries[0].isIntersecting && this.books.length % this.size == 0) {

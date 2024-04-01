@@ -15,8 +15,8 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 /* import specific icons */
 import {
 	faCheck,
-	faEllipsis,
 	faEllipsisV,
+	faDownload,
 	faPencil,
 	faPlus,
 	faUpload,
@@ -35,7 +35,7 @@ if ("serviceWorker" in navigator) {
 	});
 }
 
-library.add(faPlus, faCheck, faPencil, faUpload, faEllipsisV);
+library.add(faPlus, faCheck, faPencil, faUpload, faEllipsisV, faDownload);
 
 const pinia = createPinia();
 createApp(App)
