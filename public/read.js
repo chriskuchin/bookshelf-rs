@@ -3,13 +3,13 @@ import("./css/read.scss");
 import ePub from "epubjs";
 
 
-var params = URLSearchParams && new URLSearchParams(document.location.search.substring(1));
-var url = params && params.get("url") && decodeURIComponent(params.get("url"));
-var currentSectionIndex = (params && params.get("loc")) ? params.get("loc") : undefined;
+const params = URLSearchParams && new URLSearchParams(document.location.search.substring(1));
+const url = params?.get("url") && decodeURIComponent(params.get("url"));
+const currentSectionIndex = (params?.get("loc")) ? params.get("loc") : undefined;
 
 // Load the opf
 window.book = ePub(url || "/api/v1/books/3/files/epub/", { openAs: "epub" });
-var rendition = book.renderTo("viewer", {
+const rendition = book.renderTo("viewer", {
     manager: "continuous",
     flow: "paginated",
     width: "100%",
@@ -17,42 +17,42 @@ var rendition = book.renderTo("viewer", {
     spread: "never",
 });
 
-var displayed = rendition.display(currentSectionIndex);
+const displayed = rendition.display(currentSectionIndex);
 
 
-displayed.then(function (renderer) {
+displayed.then((renderer) => {
     // -- do stuff
 });
 
 // Navigation loaded
-book.loaded.navigation.then(function (toc) {
+book.loaded.navigation.then((toc) => {
     // console.log(toc);
 });
 
 book.ready.then(() => {
 
-    var next = document.getElementById("next");
+    const next = document.getElementById("next");
 
-    next.addEventListener("click", function (e) {
+    next.addEventListener("click", (e) => {
         book.package.metadata.direction === "rtl" ? rendition.prev() : rendition.next();
         e.preventDefault();
     }, false);
 
-    var prev = document.getElementById("prev");
-    prev.addEventListener("click", function (e) {
+    const prev = document.getElementById("prev");
+    prev.addEventListener("click", (e) => {
         book.package.metadata.direction === "rtl" ? rendition.next() : rendition.prev();
         e.preventDefault();
     }, false);
 
-    var keyListener = function (e) {
+    const keyListener = (e) => {
 
         // Left Key
-        if ((e.keyCode || e.which) == 37) {
+        if ((e.keyCode || e.which) === 37) {
             book.package.metadata.direction === "rtl" ? rendition.next() : rendition.prev();
         }
 
         // Right Key
-        if ((e.keyCode || e.which) == 39) {
+        if ((e.keyCode || e.which) === 39) {
             book.package.metadata.direction === "rtl" ? rendition.prev() : rendition.next();
         }
 
@@ -63,12 +63,12 @@ book.ready.then(() => {
 
 });
 
-rendition.on("selected", function (range) {
+rendition.on("selected", (range) => {
     console.log("selected", range);
 });
 
-rendition.on("layout", function (layout) {
-    let viewer = document.getElementById("viewer");
+rendition.on("layout", (layout) => {
+    const viewer = document.getElementById("viewer");
 
     if (layout.spread) {
         viewer.classList.remove('single');
@@ -77,11 +77,11 @@ rendition.on("layout", function (layout) {
     }
 });
 
-rendition.on("relocated", function (location) {
+rendition.on("relocated", (location) => {
     console.log(location);
 
-    var next = book.package.metadata.direction === "rtl" ? document.getElementById("prev") : document.getElementById("next");
-    var prev = book.package.metadata.direction === "rtl" ? document.getElementById("next") : document.getElementById("prev");
+    const next = book.package.metadata.direction === "rtl" ? document.getElementById("prev") : document.getElementById("next");
+    const prev = book.package.metadata.direction === "rtl" ? document.getElementById("next") : document.getElementById("prev");
 
     if (location.atEnd) {
         next.style.visibility = "hidden";
@@ -97,23 +97,23 @@ rendition.on("relocated", function (location) {
 
 });
 
-book.loaded.navigation.then(function (toc) {
-    var $select = document.getElementById("toc"),
-        docfrag = document.createDocumentFragment();
+book.loaded.navigation.then((toc) => {
+    const $select = document.getElementById("toc")
+    const docfrag = document.createDocumentFragment()
 
-    toc.forEach(function (chapter) {
-        var option = document.createElement("option");
+    for (chapter of toc) {
+        const option = document.createElement("option");
         option.textContent = chapter.label;
         option.ref = chapter.href;
 
         docfrag.appendChild(option);
-    });
+    }
 
     $select.appendChild(docfrag);
 
-    $select.onchange = function () {
-        var index = $select.selectedIndex,
-            url = $select.options[index].ref;
+    $select.onchange = () => {
+        const index = $select.selectedIndex
+        const url = $select.options[index].ref
         rendition.display(url);
         return false;
     };

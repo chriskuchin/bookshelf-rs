@@ -1,46 +1,59 @@
 <template>
-  <div class="section" style="padding-top: 15px;">
-    <div class="box mb-4" v-for="book in books" :key="book.uuid">
-      <div class="has-text-right">
-        <div class="dropdown is-right" @click="clickMenu">
-          <div class="dropdown-trigger">
-            <span class="icon" aria-haspopup="true" aria-controls="dropdown-menu">
-              <icon icon="fa-solid fa-ellipsis-v"></icon>
-            </span>
-          </div>
-          <div class="dropdown-menu" id="dropdown-menu" role="menu">
-            <div class="dropdown-content">
-              <a class="dropdown-item" @click="openUploadModal(book.id)">
-                <icon icon="fa-solid fa-upload"></icon>
-                Upload Files
-              </a>
-              <a class="dropdown-item" href="#">{{ book.id }}</a>
-              <hr class="dropdown-divider" />
-              <a class="dropdown-item" @click="deleteBookClick(book.id)">Delete Book</a>
-              <hr v-if="book.files.length > 0" class="dropdown-divider" />
-              <a v-for="file in book.files" class="dropdown-item" @click="deleteFileClick(book.id, file.type)">
-                Delete {{ file.type }}
-              </a>
+  <div class="section" ref="wrapper" style="padding-top: 15px;">
+    <div class="fixed-grid has-9-cols">
+      <div class="grid">
+        <div class="cell" style="width: 180px; min-height: 250px;" v-for="book in books">
+          <div class="" style="position: relative; height: 100%;">
+            <div class="dropdown is-right" style="position: absolute; top: 0; right: 0;" @click="clickMenu">
+              <div class="dropdown-trigger">
+                <span class="icon" aria-haspopup="true" aria-controls="dropdown-menu">
+                  <icon icon="fa-solid fa-ellipsis-v"></icon>
+                </span>
+              </div>
+              <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                <div class="dropdown-content">
+                  <div class="dropdown-item">
+                    {{ book.id }}. {{ book.title }}
+                    <br />
+                    {{ book.author }}
+                    <br />
+                    {{ book.files }}
+                  </div>
+                  <hr class="dropdown-divider" />
+                  <a class="dropdown-item" @click="openUploadModal(book.id)">
+                    <icon icon="fa-solid fa-upload"></icon>
+                    Upload Files
+                  </a>
+                  <a class="dropdown-item" @click="openEditBookModal(book.id, book)">Edit Book</a>
+                  <hr class="dropdown-divider" />
+                  <a class="dropdown-item" @click="deleteBookClick(book.id)">Delete Book</a>
+                  <hr v-if="book.files.length > 0" class="dropdown-divider" />
+                  <a v-for="file in book.files" class="dropdown-item" @click="deleteFileClick(book.id, file.type)">
+                    Delete {{ file.type }}
+                  </a>
+                </div>
+              </div>
+            </div>
+            <!-- <fl :files="book.files" :bookID="book.id" /> -->
+
+            <img :title="`${book.title} by ${book.author}`" :alt="`${book.title} by ${book.author}`"
+              :src="getCoverURL(book.cover_url)" v-if="book.cover_url != ''" />
+            <div class="has-background-primary has-text-primary-invert has-radius-normal"
+              style="height: 270px; position: relative; display: block; z-index: -1;" v-else>
+              <div class="is-size-5 has-text-centered pt-4">{{ book.title }}</div>
+              <div class="is-size-6 has-text-centered pt-1">{{ book.author }}</div>
             </div>
           </div>
         </div>
       </div>
-
-      <h1 class="title">
-        {{ book.title }}
-      </h1>
-      <!-- <a @click=""><icon icon="fa-solid fa-pencil"></icon></a> -->
-      <h2 class="subtitle">{{ book.author }}</h2>
-      <fl :files="book.files" :bookID="book.id" />
     </div>
-    <div id="sentinel" ref="sentinel" style="height: 10px;"></div>
     <div class="fixed-bottom">
       <a class="button is-primary is-large fab" @click="toggleCreateModal">
         <icon icon="fa-solid fa-plus"></icon>
       </a>
     </div>
 
-    <div :class="['modal', { 'is-active': createModalActive }]">
+    <div :class="['modal', { 'is-active': createModalActive }]" ref="create-modal">
       <div class="modal-background" @click="toggleCreateModal"></div>
       <div class="modal-content">
         <div class="box">
@@ -48,22 +61,18 @@
         </div>
       </div>
     </div>
-
-    <div :class="['modal', { 'is-active': uploadModal.active }]">
-      <div class="modal-background" @click="toggleUploadModal"></div>
-      <div class="modal-content">
-        <div class="box">
-          <uff :bookID="uploadModal.id" @submit="submitUploadModal" @cancel="toggleUploadModal" />
-        </div>
-      </div>
-    </div>
+    <ebm ref="edit-book-modal" />
+    <ufm ref="upload-file-modal" />
+    <div id="sentinel" ref="sentinel" style="height: 10px;"></div>
   </div>
 </template>
 
 <script>
-import AddBookForm from '../components/AddBookForm.vue'
-import UploadFileForm from '../components/UploadFileForm.vue'
+import AddBookForm from '../components/BookForm.vue'
+import UploadFileModal from '../components/modals/UploadFile.vue'
+import EditBookModal from '../components/modals/EditBook.vue'
 import FileList from '../components/FileList.vue'
+import { searchLibrary, getCoverURL } from '../api/openlibrary'
 import { mapActions, mapState } from 'pinia';
 import { useBooksStore } from '../stores/books';
 import { useFiltersStore } from '../stores/filters';
@@ -71,9 +80,10 @@ import { useFilesStore } from '../stores/files';
 
 export default {
   components: {
-    "abf": AddBookForm,
-    "uff": UploadFileForm,
-    "fl": FileList,
+    abf: AddBookForm,
+    ufm: UploadFileModal,
+    fl: FileList,
+    ebm: EditBookModal,
   },
   created: function () {
     this.$watch(
@@ -107,8 +117,6 @@ export default {
     if (this.$route.query["series"]) {
       filterStore.setSeriesFilter(this.$route.query["series"])
     }
-
-
   },
   data: function () {
     return {
@@ -123,7 +131,7 @@ export default {
           "author"
         ]
       },
-      size: 10,
+      size: 50,
       page: 0,
       createModalActive: false,
     }
@@ -134,6 +142,13 @@ export default {
   methods: {
     ...mapActions(useBooksStore, ['getBooks', 'createBook', 'uploadBookFiles', 'deleteBook']),
     ...mapActions(useFilesStore, ['deleteFile']),
+    getCoverURL,
+    getBooksInfo: function (author, title) {
+      searchLibrary(author, title).then((info) => {
+        const book = info['docs'][0]
+        console.log(book)
+      })
+    },
     clickMenu: function (e) {
       let target = e.currentTarget
       if (target.className.includes("is-active")) {
@@ -170,17 +185,12 @@ export default {
     toggleCreateModal: function () {
       this.createModalActive = !this.createModalActive
     },
-    async submitUploadModal(id, files) {
-      this.uploadBookFiles(id, files)
-      this.toggleUploadModal()
-      this.uploadModal.id = ""
+    openUploadModal: function (bookId) {
+      this.$refs['upload-file-modal'].open(bookId)
     },
-    toggleUploadModal: function () {
-      this.uploadModal.active = !this.uploadModal.active
-    },
-    openUploadModal: function (bookID) {
-      this.uploadModal.id = bookID
-      this.uploadModal.active = true
+    openEditBookModal: function (id, book) {
+      console.log(book)
+      this.$refs['edit-book-modal'].open(id, book)
     }
   }
 }

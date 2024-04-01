@@ -10,7 +10,7 @@ lint:
 lint-fix:
   biome lint --apply ./public
 
-pkg:
+pack:
   npx webpack --mode=development
 
 run:

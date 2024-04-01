@@ -63,6 +63,21 @@ export const useBooksStore = defineStore("books", {
 
 			return await res.json();
 		},
+		async updateBook(id, book) {
+			const url = `/api/v1/books/${id}`
+
+			const res = await fetch(url, {
+				method: "PUT",
+				body: JSON.stringify(book),
+				headers: {
+					"Content-Type": "application/json"
+				}
+			})
+
+			if (!res.ok) {
+				throw new Error("failed to update the book")
+			}
+		},
 		async uploadBookFiles(id, files) {
 			if (files.length === 0) {
 				// No files selected
