@@ -29,7 +29,7 @@ export default {
     },
     cancel: function () {
       this.book = {}
-      this.id = ""
+      this.id = 0
 
       this.toggle()
     },
@@ -43,6 +43,10 @@ export default {
       await this.updateBook(book.id, book)
       // let id = await this.createBook(book)
       // this.uploadBookFiles(id, files)
+
+      this.book = {}
+      this.id = 0
+
       this.toggle()
     },
   }
