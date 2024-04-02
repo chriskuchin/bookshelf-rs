@@ -1,6 +1,6 @@
 <template>
-  <div class="section" ref="wrapper" style="padding-top: 15px;">
-    <div class="fixed-grid has-9-cols">
+  <div :class="[spacingClass]" ref="wrapper" style="padding-top: 15px;">
+    <div :class="['fixed-grid', columnClass]">
       <div class="grid">
         <div class="cell" style="width: 180px; min-height: 250px;" v-for="book in books">
           <div class="" style="position: relative; height: 100%;">
@@ -123,9 +123,24 @@ export default {
     if (this.$route.query["series"]) {
       filterStore.setSeriesFilter(this.$route.query["series"])
     }
+
+    let vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+
+    if (vw < 500) {
+      this.columnClass = "has-2-cols"
+      this.spacingClass = "mx-0"
+    } else if (vw > 500 && vw < 900) {
+      this.columnClass = "has-6-cols"
+      this.spacingClass = "mx-0"
+    } else {
+      this.columnClass = "has-9-cols"
+      this.spacingClass = "mx-6"
+    }
   },
   data: function () {
     return {
+      columnClass: "",
+      spacingClass: "",
       uploadModal: {
         active: false,
         id: "",
