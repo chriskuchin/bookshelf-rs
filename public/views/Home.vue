@@ -130,8 +130,8 @@ export default {
       this.columnClass = "has-2-cols"
       this.spacingClass = "mx-0"
     } else if (vw > 500 && vw < 900) {
-      this.columnClass = "has-6-cols"
-      this.spacingClass = "mx-0"
+      this.columnClass = "has-4-cols"
+      this.spacingClass = "mx-1"
     } else {
       this.columnClass = "has-9-cols"
       this.spacingClass = "mx-6"
