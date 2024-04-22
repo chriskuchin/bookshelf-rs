@@ -22,7 +22,7 @@
   "devDependencies": {
     "@mdi/font": "^7.3.67",
     "@mdi/js": "^7.3.67",
-    "@vue/compiler-sfc": "^3.4.14",
+    "@vue/compiler-sfc": "^3.4.23",
 		"bulma": "^1.0.0",
     "css-loader": "^6.9.1",
     "html-webpack-plugin": "^5.6.0",
