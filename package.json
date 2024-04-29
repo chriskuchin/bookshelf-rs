@@ -17,7 +17,7 @@
     "pinia": "^2.1.7",
     "vue": "^3.4.23",
     "vue-router": "^4.3.2",
-    "workbox-webpack-plugin": "^7.0.0"
+    "workbox-webpack-plugin": "^7.1.0"
   },
   "devDependencies": {
     "@mdi/font": "^7.3.67",
