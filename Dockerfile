@@ -1,4 +1,4 @@
-FROM node:21-alpine AS webpack
+FROM node:22-alpine AS webpack
 ADD . /public
 WORKDIR /public
 RUN npm install && npx webpack
