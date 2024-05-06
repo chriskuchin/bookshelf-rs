@@ -19,5 +19,5 @@ aws-config = "1.2.1"
 aws-sdk-s3 = { version = "1.24.0", features = ["behavior-version-latest"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
-tokio-util = { version = "0.7.10", features = ["io"] }
+tokio-util = { version = "0.7.11", features = ["io"] }
 bytes = "1.6.0"
