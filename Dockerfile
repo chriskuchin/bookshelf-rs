@@ -1,9 +1,9 @@
-FROM node:21-alpine AS webpack
+FROM node:22-alpine AS webpack
 ADD . /public
 WORKDIR /public
 RUN npm install && npx webpack
 
-FROM rust:1.77-bullseye as builder
+FROM rust:1.78-bullseye as builder
 WORKDIR /usr/src/bookshelf-rs
 
 RUN apt-get update && apt-get install -y build-essential libssl-dev pkg-config
