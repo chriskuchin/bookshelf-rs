@@ -15,7 +15,7 @@
     "epubjs": "^0.3.93",
     "jszip": "^3.10.1",
     "pinia": "^2.1.7",
-    "vue": "^3.4.23",
+    "vue": "^3.4.30",
     "vue-router": "^4.3.2",
     "workbox-webpack-plugin": "^7.0.0"
   },
